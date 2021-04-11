@@ -2,6 +2,7 @@
 # MIT License
 
 from src.error import ErrorHandler
+from src.tokenizer import Token, tokenize
 from sys import argv
 
 # lox repl
@@ -25,9 +26,22 @@ def exec_file(fname: str) -> None:
 
 #execute lox source code
 def run(src: str) -> None:
-    err = ErrorHandler()
-    print(src)
+    tokens, err = tokenize(src)
 
+    if display_errors(err):
+        return
+
+#error trap
+def display_errors(err) -> bool:
+    if err:
+        for i in err:
+            print(i)
+
+        return True
+
+    return False
+
+#lox entry point, repl or source
 if __name__ == "__main__":
     argc: int = len(argv)
 
