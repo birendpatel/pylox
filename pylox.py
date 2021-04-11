@@ -1,6 +1,7 @@
 # Copyright (C) 2021, Biren Patel
 # MIT License
 
+from src.error import ErrorHandler
 from sys import argv
 
 # lox repl
@@ -10,7 +11,7 @@ def exec_prompt() -> None:
             src = input(">>> ")
             run(src)
         except (KeyboardInterrupt, EOFError):
-            print("")
+            print("\b\b  ")
             break
 
 # fetch lox source from file
@@ -24,6 +25,7 @@ def exec_file(fname: str) -> None:
 
 #execute lox source code
 def run(src: str) -> None:
+    err = ErrorHandler()
     print(src)
 
 if __name__ == "__main__":
