@@ -3,7 +3,7 @@
 # Error handler to queue errors found during lox source interpretation
 
 class ErrorHandler():
-    def __init__(self, limit: int) -> None:
+    def __init__(self, limit: int = 10) -> None:
         """\
         @limit: maximum capacity, negative indicates no threshold
         @queue: FIFO via self.push() and self.__iter__()
@@ -18,10 +18,10 @@ class ErrorHandler():
         @error: description
         returns: False if queue is already at maximum capacity
         """
-        if len(self.__queue) = self.__limit:
+        if len(self.__queue) == self.__limit:
             return False
 
-        msg = "{}: {}".format(line, error)
+        msg = "line {}: {}".format(line, error)
         self.__queue.append(msg)
         return True
 
@@ -32,4 +32,4 @@ class ErrorHandler():
         return bool(self.__queue)
 
     def __iter__(self):
-        return self.__queue
+        return iter(self.__queue)
