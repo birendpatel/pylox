@@ -80,6 +80,18 @@ single_map = {
 '*': TokenType.STAR
 }
 
+#inverse mapping of single/double tokens from TokenType
+double_map = {
+'!': TokenType.BANG,
+'!=': TokenType.BANG_EQUAL,
+'=': TokenType.EQUAL,
+'==': TokenType.EQUAL_EQUAL,
+'>': TokenType.GREATER,
+'>=': TokenType.GREATER_EQUAL,
+'<': TokenType.LESS,
+'<=': TokenType.LESS_EQUAL,
+}
+
 #whitespace characters excluding newline and comments
 whitespace_set = set([' ', '\t', '\r', '\f', '\v'])
 
@@ -100,6 +112,19 @@ def tokenize(src):
         #single character tokens excluding slash
         if src[i] in single_map:
             tokens.append(Token(single_map[src[i]], line, src[i], None))
+
+        #single/double tokens
+        if src[i] in double_map:
+            try:
+                double = src[i] + src[i + 1]
+            except IndexError:
+                double = ""
+
+            if double in double_map:
+                tokens.append(Token(double_map[double], line, double, None))
+                i += 1
+            else:
+                tokens.append(Token(double_map[src[i]], line, src[i], None))
 
         #whitespace characters (ignored)
         elif src[i] in whitespace_set:
