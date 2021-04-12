@@ -125,8 +125,8 @@ def handle_string(i, line, src, tokens) -> int:
     newline = src[i + 1:].find('\n')
 
     if quote != -1 and quote < newline:
-        lexeme = src[i: quote + 2]
-        literal = src[i + 1: quote + 1]
+        lexeme = src[i: i + quote + 2]
+        literal = src[i + 1: i + quote + 1]
         tokens.append(Token(TokenType.STRING, line, lexeme, literal))
     else:
         return -1
