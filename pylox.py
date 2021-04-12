@@ -9,7 +9,7 @@ from sys import argv
 def exec_prompt() -> None:
     while(True):
         try:
-            src = input(">>> ")
+            src = input(">>> ") + '\n'
             run(src)
         except (KeyboardInterrupt, EOFError):
             print("\b\b  ")
@@ -20,6 +20,10 @@ def exec_file(fname: str) -> None:
     try:
         with open(fname, 'r') as file:
             src: str = file.read()
+
+            if src[-1] != '\n':
+                src += '\n'
+
             run(src)
     except FileNotFoundError:
         print("{} file not found".format(fname))

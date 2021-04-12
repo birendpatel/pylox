@@ -95,6 +95,34 @@ double_map = {
 #whitespace characters excluding newline and comments
 whitespace_set = set([' ', '\t', '\r', '\f', '\v'])
 
+#tokenizer single/double tokens helper function
+def handle_double(i, line, src, tokens) -> int:
+    double = src[i] + src[i + 1]
+
+    if double in double_map:
+        tokens.append(Token(double_map[double], line, double, None))
+        i += 1
+    else:
+        tokens.append(Token(double_map[src[i]], line, src[i], None))
+
+    return i
+
+#tokenizer slash helper function, returns negative as a break signal.
+#else i is the index of the last-parsed character
+def handle_slash(i, line, src, tokens) -> int:
+    if src[i + 1] == '/':
+        i = i + src[i:].find('\n')
+
+        assert((i == -1 or i > 0) and "str.find retval is not -1")
+        i -= 1
+    else:
+        tokens.append(Token(TokenType.SLASH, line, '/', None))
+
+    return i
+
+
+#via pylox.py tokenizer always expects a newline terminated input
+#therefore no try-catch for IndexError required for src[i + 1] access
 def tokenize(src):
     """\
     convert input source string into a List[Token]
@@ -109,46 +137,16 @@ def tokenize(src):
         assert(i >= 0 and "index is not strictly increasing")
         assert(line >= 1 and "line is not strictly increasing")
 
-        #single character tokens excluding slash
         if src[i] in single_map:
             tokens.append(Token(single_map[src[i]], line, src[i], None))
-
-        #single/double tokens
-        if src[i] in double_map:
-            try:
-                double = src[i] + src[i + 1]
-            except IndexError:
-                double = ""
-
-            if double in double_map:
-                tokens.append(Token(double_map[double], line, double, None))
-                i += 1
-            else:
-                tokens.append(Token(double_map[src[i]], line, src[i], None))
-
-        #whitespace characters (ignored)
+        elif src[i] in double_map:
+            i = handle_double(i, line, src, tokens)
         elif src[i] in whitespace_set:
             pass
-
-        #newline (enforce line increment only here)
         elif src[i] == '\n':
             line += 1
-
-        #comments (ignored) and slash
         elif src[i] == '/':
-            if src[i + 1] == '/':
-                i = i + src[i:].find('\n')
-
-                assert((i == -1 or i > 0) and "str.find retval is not -1")
-
-                if i == -1:
-                    break
-                else:
-                    continue
-            else:
-                tokens.append(Token(TokenType.SLASH, line, '/', None))
-
-        #unknown symbols (ignored past limit)
+            i = handle_slash(i, line, src, tokens)
         else:
             status = err.push(line, 'found unknown symbol {}'.format(src[i]))
 
