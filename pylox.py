@@ -30,6 +30,9 @@ def run(src: str) -> None:
 
     if display_errors(err):
         return
+    ## DEBUG:
+    for i in tokens:
+        print(i)
 
 #error trap
 def display_errors(err) -> bool:

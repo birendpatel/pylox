@@ -63,7 +63,11 @@ class Token():
         self.lexeme = lexeme
         self.literal = literal
 
-#inverse mapping of single charcter tokens from TokenType
+    def __repr__(self):
+        msg = "line {}: {} ({},{})"
+        return msg.format(self.line, self.type, self.lexeme, self.literal)
+
+#inverse mapping of single charcter tokens from TokenType, except slash
 single_map = {
 '(': TokenType.LEFT_PAREN,
 ')': TokenType.RIGHT_PAREN,
@@ -74,7 +78,6 @@ single_map = {
 '-': TokenType.MINUS,
 '+': TokenType.PLUS,
 ';': TokenType.SEMICOLON,
-'/': TokenType.SLASH,
 '*': TokenType.STAR
 }
 
@@ -86,18 +89,30 @@ def tokenize(src):
     convert input source string into a List[Token]
     """
     tokens = []
-    err = ErrorHandler()
+    err = ErrorHandler(limit = 3)
 
     line = 0
+    i = 0
 
-    for i in src:
-        if i in single_map:
-            tokens.append(single_map[i], line, i, None)
+    while i < len(src):
+        if src[i] in single_map:
+            tokens.append(Token(single_map[src[i]], line, src[i], None))
+            i += 1
             continue
-
-        if i in white_set:
+        elif src[i] in white_set:
+            i += 1
             continue
+        else:
+            status = err.push(line, 'found unknown symbol {}'.format(src[i]))
 
-    tokens.append(Token(TokenType.EOF, line, None, None))
+            if status == False:
+                err.grow(1)
+                err.push(line, 'additional errors found (hidden)')
+                break
+            else:
+                i = i + 1
+
+    if not err:
+        tokens.append(Token(TokenType.EOF, line, None, None))
 
     return (tokens, err)
