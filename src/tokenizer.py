@@ -91,17 +91,28 @@ def tokenize(src):
     tokens = []
     err = ErrorHandler(limit = 3)
 
-    line = 0
+    line = 1
     i = 0
 
     while i < len(src):
         if src[i] in single_map:
             tokens.append(Token(single_map[src[i]], line, src[i], None))
-            i += 1
-            continue
+
         elif src[i] in white_set:
-            i += 1
-            continue
+            pass
+
+        elif src[i] == '\n':
+            line += 1
+
+        elif src[i] == '/':
+            if src[i + 1] == '/':
+                i = i + src[i:].find('\n') - 1 #sub 1 due to loop increment
+
+                if i < 0:
+                    break
+            else:
+                tokens.append(Token(TokenType.SLASH, line, '/', None))
+
         else:
             status = err.push(line, 'found unknown symbol {}'.format(src[i]))
 
@@ -109,8 +120,8 @@ def tokenize(src):
                 err.grow(1)
                 err.push(line, 'additional errors found (hidden)')
                 break
-            else:
-                i = i + 1
+
+        i += 1
 
     if not err:
         tokens.append(Token(TokenType.EOF, line, None, None))
