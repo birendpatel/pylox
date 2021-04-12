@@ -63,11 +63,41 @@ class Token():
         self.lexeme = lexeme
         self.literal = literal
 
+#inverse mapping of single charcter tokens from TokenType
+single_map = {
+'(': TokenType.LEFT_PAREN,
+')': TokenType.RIGHT_PAREN,
+'{': TokenType.LEFT_BRACE,
+'}': TokenType.RIGHT_BRACE,
+',': TokenType.COMMA,
+'.': TokenType.DOT,
+'-': TokenType.MINUS,
+'+': TokenType.PLUS,
+';': TokenType.SEMICOLON,
+'/': TokenType.SLASH,
+'*': TokenType.STAR
+}
+
+#whitespace characters excluding newline and comments
+white_set = set([' ', '\t', '\r', '\f', '\v'])
+
 def tokenize(src):
     """\
     convert input source string into a List[Token]
     """
     tokens = []
     err = ErrorHandler()
+
+    line = 0
+
+    for i in src:
+        if i in single_map:
+            tokens.append(single_map[i], line, i, None)
+            continue
+
+        if i in white_set:
+            continue
+
+    tokens.append(Token(TokenType.EOF, line, None, None))
 
     return (tokens, err)
