@@ -95,6 +95,9 @@ double_map = {
 #whitespace characters excluding newline and comments
 whitespace_set = set([' ', '\t', '\r', '\f', '\v'])
 
+#digit characters
+digit_set = set(['0','1','2','3','4','5','6','7','8','9'])
+
 #tokenizer single/double tokens helper function
 def handle_double(i, line, src, tokens) -> int:
     double = src[i] + src[i + 1]
@@ -106,6 +109,26 @@ def handle_double(i, line, src, tokens) -> int:
         tokens.append(Token(double_map[src[i]], line, src[i], None))
 
     return i
+
+#tokenizer doubles helper function
+#return negative value on error as signal
+def handle_digit(i, line, src, tokens) -> int:
+    j = i
+
+    while src[j] in digit_set:
+        j += 1
+
+        if src[j] == '.':
+            if src[j + 1] in digit_set:
+                j += 1
+            else:
+                return -1
+
+    literal = float(src[i:j])
+    tokens.append(Token(TokenType.NUMBER, line, src[i:j], literal))
+
+    return j
+
 
 #tokenizer slash helper function
 #i is the index of the last-parsed character belonging to the comment
@@ -159,6 +182,13 @@ def tokenize(src):
             line += 1
         elif src[i] == '/':
             i = handle_slash(i, line, src, tokens)
+        elif src[i] in digit_set:
+            i = handle_digit(i, line, src, tokens)
+
+            if i < 0:
+                err.grow(1)
+                status = err.push(line, 'number not formatted correctly')
+                break
         elif src[i] == '"':
             i = handle_string(i, line, src, tokens)
 
