@@ -2,7 +2,6 @@
 # MIT License
 # Convert lox raw source code to a list of tokens
 
-from dataclasses import dataclass
 from enum import Enum
 from src.error import ErrorHandler
 
@@ -82,7 +81,7 @@ single_map = {
 }
 
 #whitespace characters excluding newline and comments
-white_set = set([' ', '\t', '\r', '\f', '\v'])
+whitespace_set = set([' ', '\t', '\r', '\f', '\v'])
 
 def tokenize(src):
     """\
@@ -95,24 +94,36 @@ def tokenize(src):
     i = 0
 
     while i < len(src):
+        assert(i >= 0 and "index is not strictly increasing")
+        assert(line >= 1 and "line is not strictly increasing")
+
+        #single character tokens excluding slash
         if src[i] in single_map:
             tokens.append(Token(single_map[src[i]], line, src[i], None))
 
-        elif src[i] in white_set:
+        #whitespace characters (ignored)
+        elif src[i] in whitespace_set:
             pass
 
+        #newline (enforce line increment only here)
         elif src[i] == '\n':
             line += 1
 
+        #comments (ignored) and slash
         elif src[i] == '/':
             if src[i + 1] == '/':
-                i = i + src[i:].find('\n') - 1 #sub 1 due to loop increment
+                i = i + src[i:].find('\n')
 
-                if i < 0:
+                assert((i == -1 or i > 0) and "str.find retval is not -1")
+
+                if i == -1:
                     break
+                else:
+                    continue
             else:
                 tokens.append(Token(TokenType.SLASH, line, '/', None))
 
+        #unknown symbols (ignored past limit)
         else:
             status = err.push(line, 'found unknown symbol {}'.format(src[i]))
 
@@ -125,5 +136,8 @@ def tokenize(src):
 
     if not err:
         tokens.append(Token(TokenType.EOF, line, None, None))
+
+    #if there are no errors then tokens must be nonempty
+    assert(bool(err) == True or bool(tokens) == True)
 
     return (tokens, err)
