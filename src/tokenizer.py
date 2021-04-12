@@ -107,19 +107,31 @@ def handle_double(i, line, src, tokens) -> int:
 
     return i
 
-#tokenizer slash helper function, returns negative as a break signal.
-#else i is the index of the last-parsed character
+#tokenizer slash helper function
+#i is the index of the last-parsed character belonging to the comment
 def handle_slash(i, line, src, tokens) -> int:
     if src[i + 1] == '/':
-        i = i + src[i:].find('\n')
-
-        assert((i == -1 or i > 0) and "str.find retval is not -1")
-        i -= 1
+        i = i + src[i:].find('\n') - 1
+        assert(i > 0 and "str.find retval is not -1")
     else:
         tokens.append(Token(TokenType.SLASH, line, '/', None))
 
     return i
 
+#tokenizer string literal helper function, returns negative as an error signal
+#return index of closing quotation
+def handle_string(i, line, src, tokens) -> int:
+    quote = src[i + 1:].find('"')
+    newline = src[i + 1:].find('\n')
+
+    if quote != -1 and quote < newline:
+        lexeme = src[i: quote + 2]
+        literal = src[i + 1: quote + 1]
+        tokens.append(Token(TokenType.STRING, line, lexeme, literal))
+    else:
+        return -1
+
+    return i + quote + 1
 
 #via pylox.py tokenizer always expects a newline terminated input
 #therefore no try-catch for IndexError required for src[i + 1] access
@@ -147,10 +159,15 @@ def tokenize(src):
             line += 1
         elif src[i] == '/':
             i = handle_slash(i, line, src, tokens)
-        else:
-            status = err.push(line, 'found unknown symbol {}'.format(src[i]))
+        elif src[i] == '"':
+            i = handle_string(i, line, src, tokens)
 
-            if status == False:
+            if i < 0:
+                err.grow(1)
+                status = err.push(line, 'string not terminated')
+                break
+        else:
+            if not err.push(line, 'found unknown symbol {}'.format(src[i])):
                 err.grow(1)
                 err.push(line, 'additional errors found (hidden)')
                 break
