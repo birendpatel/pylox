@@ -25,6 +25,13 @@ class ErrorHandler():
         self.__queue.append(msg)
         return True
 
+    def grow(self, inc: int) -> bool:
+        if inc > 0:
+            self.__limit = self.__limit + inc
+            return True
+
+        return False
+
     def reset(self) -> None:
         self.__queue = []
 

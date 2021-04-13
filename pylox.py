@@ -2,13 +2,14 @@
 # MIT License
 
 from src.error import ErrorHandler
+from src.tokenizer import Token, Tokenizer
 from sys import argv
 
 # lox repl
 def exec_prompt() -> None:
     while(True):
         try:
-            src = input(">>> ")
+            src = input(">>> ") + '\n'
             run(src)
         except (KeyboardInterrupt, EOFError):
             print("\b\b  ")
@@ -19,15 +20,37 @@ def exec_file(fname: str) -> None:
     try:
         with open(fname, 'r') as file:
             src: str = file.read()
+
+            if src[-1] != '\n':
+                src += '\n'
+
             run(src)
     except FileNotFoundError:
         print("{} file not found".format(fname))
 
 #execute lox source code
 def run(src: str) -> None:
-    err = ErrorHandler()
-    print(src)
+    tkz = Tokenizer()
+    
+    tokens, err = tkz.tokenize(src)
 
+    if display_errors(err):
+        return
+    ## DEBUG:
+    for i in tokens:
+        print(i)
+
+#error trap
+def display_errors(err) -> bool:
+    if err:
+        for i in err:
+            print(i)
+
+        return True
+
+    return False
+
+#lox entry point, repl or source
 if __name__ == "__main__":
     argc: int = len(argv)
 
