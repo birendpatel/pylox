@@ -66,185 +66,219 @@ class Token():
         msg = "line {}: {} ({},{})"
         return msg.format(self.line, self.type, self.lexeme, self.literal)
 
-#inverse mapping of single charcter tokens from TokenType, except slash
-single_map = {
-'(': TokenType.LEFT_PAREN,
-')': TokenType.RIGHT_PAREN,
-'{': TokenType.LEFT_BRACE,
-'}': TokenType.RIGHT_BRACE,
-',': TokenType.COMMA,
-'.': TokenType.DOT,
-'-': TokenType.MINUS,
-'+': TokenType.PLUS,
-';': TokenType.SEMICOLON,
-'*': TokenType.STAR
-}
+class Tokenizer():
+    def __init__(self):
+        """\
+        convert input source string into a List[Token]
+        """
+        self.src = " "
+        self.err = ErrorHandler()
+        self.line = 0
+        self.i = 0 #src index
+        self.tokens = []
 
-#inverse mapping of single/double tokens from TokenType
-double_map = {
-'!': TokenType.BANG,
-'!=': TokenType.BANG_EQUAL,
-'=': TokenType.EQUAL,
-'==': TokenType.EQUAL_EQUAL,
-'>': TokenType.GREATER,
-'>=': TokenType.GREATER_EQUAL,
-'<': TokenType.LESS,
-'<=': TokenType.LESS_EQUAL,
-}
+        #inverse mapping of single char TokenTypes, except slash
+        self.single_map = {
+        '(': TokenType.LEFT_PAREN,
+        ')': TokenType.RIGHT_PAREN,
+        '{': TokenType.LEFT_BRACE,
+        '}': TokenType.RIGHT_BRACE,
+        ',': TokenType.COMMA,
+        '.': TokenType.DOT,
+        '-': TokenType.MINUS,
+        '+': TokenType.PLUS,
+        ';': TokenType.SEMICOLON,
+        '*': TokenType.STAR
+        }
 
-#inverse mapping of keywords from TokenType
-keywords_map = {
-'and': TokenType.AND,
-'class': TokenType.CLASS,
-'else': TokenType.ELSE,
-'false': TokenType.FALSE,
-'fun': TokenType.FUN,
-'for': TokenType.FOR,
-'if': TokenType.IF,
-'nil': TokenType.NIL,
-'or': TokenType.OR,
-'print': TokenType.PRINT,
-'return': TokenType.RETURN,
-'super': TokenType.SUPER,
-'this': TokenType.THIS,
-'true': TokenType.TRUE,
-'var': TokenType.VAR,
-'while': TokenType.WHILE
-}
+        #inverse mapping of single/double tokens from TokenType
+        self.double_map = {
+        '!': TokenType.BANG,
+        '!=': TokenType.BANG_EQUAL,
+        '=': TokenType.EQUAL,
+        '==': TokenType.EQUAL_EQUAL,
+        '>': TokenType.GREATER,
+        '>=': TokenType.GREATER_EQUAL,
+        '<': TokenType.LESS,
+        '<=': TokenType.LESS_EQUAL,
+        }
 
-#whitespace characters excluding newline and comments
-whitespace_set = set([' ', '\t', '\r', '\f', '\v'])
+        #inverse mapping of keywords from TokenType
+        self.keywords_map = {
+        'and': TokenType.AND,
+        'class': TokenType.CLASS,
+        'else': TokenType.ELSE,
+        'false': TokenType.FALSE,
+        'fun': TokenType.FUN,
+        'for': TokenType.FOR,
+        'if': TokenType.IF,
+        'nil': TokenType.NIL,
+        'or': TokenType.OR,
+        'print': TokenType.PRINT,
+        'return': TokenType.RETURN,
+        'super': TokenType.SUPER,
+        'this': TokenType.THIS,
+        'true': TokenType.TRUE,
+        'var': TokenType.VAR,
+        'while': TokenType.WHILE
+        }
 
-#digit characters
-digit_set = set(['0','1','2','3','4','5','6','7','8','9'])
+        #whitespace characters excluding newline and comments
+        self.whitespace_set = set([' ', '\t', '\r', '\f', '\v'])
 
-#tokenizer single/double tokens helper function
-def handle_double(i, line, src, tokens) -> int:
-    double = src[i] + src[i + 1]
+        #digit characters
+        self.digit_set = set(['0','1','2','3','4','5','6','7','8','9'])
 
-    if double in double_map:
-        tokens.append(Token(double_map[double], line, double, None))
-        i += 1
-    else:
-        tokens.append(Token(double_map[src[i]], line, src[i], None))
+    def handle_double(self):
+        """\
+        single/double tokens helper for self.tokenize
+        """
+        double = self.src[self.i] + self.src[self.i + 1]
 
-    return i
-
-#tokenizer doubles helper function
-#return negative value on error as signal
-def handle_digit(i, line, src, tokens) -> int:
-    j = i
-
-    while src[j] in digit_set:
-        j += 1
-
-        if src[j] == '.':
-            if src[j + 1] in digit_set:
-                j += 1
-            else:
-                return -1
-
-    literal = float(src[i:j])
-    tokens.append(Token(TokenType.NUMBER, line, src[i:j], literal))
-
-    return j
-
-
-#tokenizer slash helper function
-#i is the index of the last-parsed character belonging to the comment
-def handle_slash(i, line, src, tokens) -> int:
-    if src[i + 1] == '/':
-        i = i + src[i:].find('\n') - 1
-        assert(i > 0 and "str.find retval is not -1")
-    else:
-        tokens.append(Token(TokenType.SLASH, line, '/', None))
-
-    return i
-
-#tokenizer string literal helper function, returns negative as an error signal
-#return index of closing quotation
-def handle_string(i, line, src, tokens) -> int:
-    quote = src[i + 1:].find('"')
-    newline = src[i + 1:].find('\n')
-
-    if quote != -1 and quote < newline:
-        lexeme = src[i: i + quote + 2]
-        literal = src[i + 1: i + quote + 1]
-        tokens.append(Token(TokenType.STRING, line, lexeme, literal))
-    else:
-        return -1
-
-    return i + quote + 1
-
-#tokenizer word-keyword helper function
-#return word and index of final letter
-def get_word(i, src):
-    j = i
-
-    while src[j].isalpha() or src[j].isdigit() or src[j] == '_':
-        j += 1
-
-    return (src[i:j], j - 1)
-
-#via pylox.py tokenizer always expects a newline terminated input
-#therefore no try-catch for IndexError required for src[i + 1] access
-def tokenize(src):
-    """\
-    convert input source string into a List[Token]
-    """
-    tokens = []
-    err = ErrorHandler(limit = 3)
-
-    line = 1
-    i = 0
-
-    while i < len(src):
-        assert(i >= 0 and "index is not strictly increasing")
-        assert(line >= 1 and "line is not strictly increasing")
-
-        if src[i] in single_map:
-            tokens.append(Token(single_map[src[i]], line, src[i], None))
-        elif src[i] in double_map:
-            i = handle_double(i, line, src, tokens)
-        elif src[i] in whitespace_set:
-            pass
-        elif src[i] == '\n':
-            line += 1
-        elif src[i] == '/':
-            i = handle_slash(i, line, src, tokens)
-        elif src[i] in digit_set:
-            i = handle_digit(i, line, src, tokens)
-
-            if i < 0:
-                err.grow(1)
-                status = err.push(line, 'number not formatted correctly')
-                break
-        elif src[i] == '"':
-            i = handle_string(i, line, src, tokens)
-
-            if i < 0:
-                err.grow(1)
-                status = err.push(line, 'string not terminated')
-                break
-        elif src[i].isalpha() or src[i] == '_':
-            word, i = get_word(i, src)
-
-            if word in keywords_map:
-                tokens.append(Token(keywords_map[word], line, word, None))
-            else:
-                tokens.append(Token(TokenType.IDENTIFIER, line, word, word))
+        if double in self.double_map:
+            tok = Token(self.double_map[double], self.line, double, None)
+            self.tokens.append(tok)
+            self.i += 1
         else:
-            if not err.push(line, 'found unknown symbol {}'.format(src[i])):
-                err.grow(1)
-                err.push(line, 'additional errors found (hidden)')
-                break
+            char = self.src[self.i]
+            tok = Token(self.double_map[char], self.line, char, None)
+            self.tokens.append(tok)
 
-        i += 1
+    def handle_digit(self):
+        """\
+        number literals helper for self.tokenize.
+        sets self.i to negative on error.
+        """
+        j = self.i
 
-    if not err:
-        tokens.append(Token(TokenType.EOF, line, None, None))
+        while self.src[j] in self.digit_set:
+            j += 1
 
-    #if there are no errors then tokens must be nonempty
-    assert(bool(err) == True or bool(tokens) == True)
+            if self.src[j] == '.':
+                if self.src[j + 1] in self.digit_set:
+                    j += 1
+                else:
+                    self.i = -1
+                    return
 
-    return (tokens, err)
+        lexeme = self.src[self.i:j]
+        literal = float(lexeme)
+        tok = Token(TokenType.NUMBER, self.line, lexeme, literal)
+        self.tokens.append(tok)
+
+        self.i = j - 1
+
+    def handle_slash(self):
+        """\
+        slash and comments helper for self.tokenize.
+        i is set to the index of the last-parsed charcter of the comment
+        """
+        if self.src[self.i + 1] == '/':
+            self.i = self.i + self.src[self.i:].find('\n') - 1
+            assert(self.i > 0 and "str.find retval is not -1")
+        else:
+            tok = Token(TokenType.SLASH, self.line, '/', None)
+            self.tokens.append(tok)
+
+    def handle_string(self):
+        """\
+        string literal helper function for self.tokenize.
+        sets i to negative on error, else i is index of closing quotation
+        """
+        quote = self.src[self.i + 1:].find('"')
+        newline = self.src[self.i + 1:].find('\n')
+
+        if quote != -1 and quote < newline:
+            lexeme = self.src[self.i: self.i + quote + 2]
+            literal = self.src[self.i + 1: self.i + quote + 1]
+            tok = Token(TokenType.STRING, self.line, lexeme, literal)
+            self.tokens.append(tok)
+        else:
+            self.i = -1
+
+        self.i = self.i + quote + 1
+
+    def handle_word(self):
+        """\
+        identifier and keywords helper function for self.tokenize.
+        returns the word for futher analysis.
+        i is set to last char in the identifier/keyword
+        """
+        j = self.i
+        id = self.src
+
+        while id[j].isalpha() or id[j].isdigit() or id[j] == '_':
+            j += 1
+
+        word = self.src[self.i:j]
+        self.i = j - 1
+
+        if word in self.keywords_map:
+            tok = Token(self.keywords_map[word], self.line, word, None)
+            self.tokens.append(tok)
+        else:
+            tok = Token(TokenType.IDENTIFIER, self.line, word, word)
+            self.tokens.append(tok)
+
+    #via pylox.py tokenizer always expects a newline terminated input
+    #therefore no try-catch for IndexError required for src[i + 1] access
+    def tokenize(self, src, limit = 3):
+        """\
+        @src: source code, newline terminated so that src[i + 1] is valid
+        @limit: internal ErrorHandler limit
+        """
+        #reset attrs on multiple calls
+        self.src = src
+        self.err = ErrorHandler(limit)
+        self.line = 1
+        self.i = 0
+        self.tokens = []
+
+        while self.i < len(self.src):
+            assert(self.i >= 0 and "index is not strictly increasing")
+            assert(self.line >= 1 and "line is not strictly increasing")
+
+            if (char := self.src[self.i]) in self.single_map:
+                tok = Token(self.single_map[char], self.line, char, None)
+                self.tokens.append(tok)
+            elif self.src[self.i] in self.double_map:
+                self.handle_double()
+            elif self.src[self.i] in self.whitespace_set:
+                pass
+            elif self.src[self.i] == '\n':
+                self.line += 1
+            elif self.src[self.i] == '/':
+                self.handle_slash()
+            elif self.src[self.i] in self.digit_set:
+                self.handle_digit()
+
+                if self.i < 0:
+                    self.err.grow(1)
+                    self.err.push(line, 'number formatted incorrectly')
+                    break
+            elif self.src[self.i] == '"':
+                self.handle_string()
+
+                if self.i < 0:
+                    self.err.grow(1)
+                    self.err.push(line, 'string not terminated')
+                    break
+            elif self.src[self.i].isalpha() or self.src[self.i] == '_':
+                self.handle_word()
+            else:
+                msg = "unknown symbol {}".format(self.src[self.i])
+
+                if not self.err.push(self.line, msg):
+                    self.err.grow(1)
+                    self.err.push(self.line, 'additional errors found (hidden)')
+                    break
+
+            self.i += 1
+
+        if not self.err:
+            self.tokens.append(Token(TokenType.EOF, self.line, None, None))
+
+        #if there are no errors then tokens must be nonempty
+        assert(bool(self.err) == True or bool(self.tokens) == True)
+
+        return (self.tokens, self.err)
