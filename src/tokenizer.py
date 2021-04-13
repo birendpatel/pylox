@@ -92,6 +92,26 @@ double_map = {
 '<=': TokenType.LESS_EQUAL,
 }
 
+#inverse mapping of keywords from TokenType
+keywords_map = {
+'and': TokenType.AND,
+'class': TokenType.CLASS,
+'else': TokenType.ELSE,
+'false': TokenType.FALSE,
+'fun': TokenType.FUN,
+'for': TokenType.FOR,
+'if': TokenType.IF,
+'nil': TokenType.NIL,
+'or': TokenType.OR,
+'print': TokenType.PRINT,
+'return': TokenType.RETURN,
+'super': TokenType.SUPER,
+'this': TokenType.THIS,
+'true': TokenType.TRUE,
+'var': TokenType.VAR,
+'while': TokenType.WHILE
+}
+
 #whitespace characters excluding newline and comments
 whitespace_set = set([' ', '\t', '\r', '\f', '\v'])
 
@@ -156,6 +176,16 @@ def handle_string(i, line, src, tokens) -> int:
 
     return i + quote + 1
 
+#tokenizer word-keyword helper function
+#return word and index of final letter
+def get_word(i, src):
+    j = i
+
+    while src[j].isalpha() or src[j].isdigit() or src[j] == '_':
+        j += 1
+
+    return (src[i:j], j - 1)
+
 #via pylox.py tokenizer always expects a newline terminated input
 #therefore no try-catch for IndexError required for src[i + 1] access
 def tokenize(src):
@@ -196,6 +226,13 @@ def tokenize(src):
                 err.grow(1)
                 status = err.push(line, 'string not terminated')
                 break
+        elif src[i].isalpha() or src[i] == '_':
+            word, i = get_word(i, src)
+
+            if word in keywords_map:
+                tokens.append(Token(keywords_map[word], line, word, None))
+            else:
+                tokens.append(Token(TokenType.IDENTIFIER, line, word, word))
         else:
             if not err.push(line, 'found unknown symbol {}'.format(src[i])):
                 err.grow(1)
