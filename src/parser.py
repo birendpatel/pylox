@@ -66,12 +66,43 @@ class Parser():
         return self.equality()
 
     def equality(self):
-        left = self.comparison()
-        return left
+        """\
+        <equality> := <comparison> (("==" | "!=") <comparison>)*
+        """
+        expr = self.comparison()
+
+        types = set([TokenType.EQUAL_EQUAL, TokenType.BANG_EQUAL])
+
+        while self.curr_type() in types:
+            self.advance()
+
+            left = expr
+            operator = self.prev_token()
+            right = self.comparison()
+
+            expr = Binary(left, operator, right)
+
+        return expr
 
     def comparison(self):
-        left = self.term()
-        return left
+        """\
+        <comparison> := <term> ((">" | "<" | "<=" | ">=") <term>)*
+        """
+        expr = self.term()
+
+        types = set([TokenType.GREATER, TokenType.GREATER_EQUAL, \
+                     TokenType.LESS, TokenType.LESS_EQUAL])
+
+        while self.curr_type() in types:
+            self.advance()
+
+            left = expr
+            operator = self.prev_token()
+            right = self.term()
+
+            expr = Binary(left, operator, right)
+
+        return expr
 
     def term(self):
         """\
