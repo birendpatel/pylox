@@ -74,8 +74,21 @@ class Parser():
         return left
 
     def term(self):
-        left = self.factor()
-        return left
+        """\
+        <term> := <factor> (("+" | "-") <factor>)*
+        """
+        expr = self.factor()
+
+        while self.curr_type() in set([TokenType.PLUS, TokenType.MINUS]):
+            self.advance()
+
+            left = expr
+            operator = self.prev_token()
+            right = self.factor()
+
+            expr = Binary(left, operator, right)
+
+        return expr
 
     def factor(self):
         """\
