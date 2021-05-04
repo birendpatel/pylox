@@ -56,6 +56,8 @@ def run(src: str) -> None:
 #error trap
 def display_errors(err) -> bool:
     if err:
+        print("LOX: ERRORS FOUND")
+
         for i in err:
             print(i)
 

@@ -159,5 +159,19 @@ class Parser():
         if self.curr_type() in types:
             expr = Literal(self.curr_token())
             self.advance()
+        elif self.curr_type() == TokenType.LEFT_PAREN:
+            self.advance()
+            expr = Grouping(self.expression())
+
+            if self.curr_type() == TokenType.RIGHT_PAREN:
+                self.advance()
+            else:
+                tok = self.tokens[self.i]
+                msg = "missing right parenthesis"
+                self.err.push(tok.line, msg)
+        else:
+            tok = self.tokens[self.i]
+            msg = "misplaced symbol {}".format(tok.lexeme)
+            self.err.push(tok.lin, msg)
 
         return expr
