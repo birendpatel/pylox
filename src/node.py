@@ -12,7 +12,7 @@ class Literal():
             self.val = val
 
         def __repr__(self):
-            return "{}".format(self.val)
+            return "{}".format(self.val.lexeme)
 
 class Unary():
         def __init__(self, operator, right):
@@ -20,7 +20,7 @@ class Unary():
             self.right = right
 
         def __repr__(self):
-            return "({} {})".format(self.operator, self.right)
+            return "({} {})".format(self.operator.lexeme, self.right)
 
 class Binary():
     def __init__(self, left, operator, right):
@@ -30,11 +30,11 @@ class Binary():
 
     def __repr__(self):
         msg = "({} {} {})"
-        return msg.format(self.operator, self.left, self.right)
+        return msg.format(self.operator.lexeme, self.left, self.right)
 
 class Grouping():
     def __init__(self, val):
         self.val = val
 
     def __repr__(self):
-        return "({})".format(self.val)
+        return "(group {})".format(self.val)
