@@ -78,21 +78,42 @@ class Parser():
         return left
 
     def factor(self):
-        left = self.unary()
-        return left
+        """\
+        <factor> := <unary> (("*" | "/") <unary>)*
+        """
+        expr = self.unary()
+
+        while self.curr_type() in set([TokenType.STAR, TokenType.SLASH]):
+            self.advance()
+
+            left = expr
+            operator = self.prev_token()
+            right = self.unary()
+
+            expr = Binary(left, operator, right)
+
+        return expr
 
     def unary(self):
         """\
         <unary> := ("!" | "-") <unary> | <primary>
         """
-        if self.curr_type() in [TokenType.BANG, TokenType.MINUS]:
+        if self.curr_type() in set([TokenType.BANG, TokenType.MINUS]):
             self.advance()
             return Unary(self.prev_token(), self.unary())
 
         return self.primary()
 
     def primary(self):
-        if self.curr_type() in [TokenType.NUMBER]:
+        """\
+        <primary> := NUMBER | STRING | "true" | "false" | "nil"
+        <primary> := "(" <expression> ")"
+        """
+        types = set([TokenType.NUMBER, TokenType.STRING, TokenType.NIL, \
+                     TokenType.TRUE, TokenType.FALSE])
+
+        if self.curr_type() in types:
             expr = Literal(self.curr_token())
             self.advance()
-            return expr
+
+        return expr
