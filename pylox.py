@@ -42,7 +42,7 @@ def run(src: str) -> None:
     ## DEBUG:
     for i in tokens:
         print(i)
-    ## END DEBG
+    ## END DEBUG
 
     tree, err = prs.parse(tokens)
 
