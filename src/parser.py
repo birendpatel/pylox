@@ -6,6 +6,12 @@ from src.error import ErrorHandler
 from src.tokenizer import Token, TokenType
 from src.node import Binary, Unary, Literal, Grouping
 
+class ParseError(Exception):
+    """/
+    base class to handle errors that occur during recursive descent
+    """
+    pass
+
 class Parser():
     def __init__(self):
         """\
@@ -17,6 +23,22 @@ class Parser():
         self.tokens = []
         self.i = 0
         self.ast = None
+
+    def parse(self, tokens, limit = 3):
+        """\
+        recursive descent entry point
+
+        @tokens: list of tokens provided by lexical analysis, tokens[-1] == EOF
+        @limit: internal ErrorHandler limit
+        """
+        self.err = ErrorHandler(limit)
+        self.tokens = tokens
+        self.i = 0
+
+        try:
+            return (self.expression(), self.err)
+        except ParseError:
+            return (None, self.err)
 
     def curr_type(self):
         """\
@@ -44,19 +66,6 @@ class Parser():
         """
         assert(self.i - 1 >= 0)
         return self.tokens[self.i - 1]
-
-    def parse(self, tokens, limit = 3):
-        """\
-        recursive descent entry point
-        @tokens: list of tokens provided by lexical analysis, tokens[-1] == EOF
-        @limit: internal ErrorHandler limit
-        """
-        self.err = ErrorHandler(limit)
-        self.tokens = tokens
-        self.i = 0
-        self.ast = self.expression()
-
-        return (self.ast, self.err)
 
     def expression(self):
         """\
@@ -167,9 +176,17 @@ class Parser():
                 self.advance()
             else:
                 self.trap("missing right parenthesis for grouped expression")
+        elif self.curr_type() == TokenType.EOF:
+            #this situation occurs when the user has a grammar error at the
+            #end of file such as "3-". In this situation, the parser has been
+            #passing the EOF token along the call stack. The else branch can
+            #handle this issue, but its not user friendly because it presents
+            #a EOF:"None" lexeme to the user.
+            tok = self.prev_token()
+            self.trap("misplaced symbol '{}' at end of file".format(tok.lexeme))
         else:
             lexeme = (self.tokens[self.i]).lexeme
-            self.trap("misplaced symbol {}".format(lexeme))
+            self.trap("misplaced symbol '{}'".format(lexeme))
 
         return expr
 
@@ -184,3 +201,6 @@ class Parser():
         if not self.err.push(line, msg):
             self.err.grow(1)
             self.error.push(line, "additional errors found (hidden)")
+
+        #synchronization occurs here once statements are implemented
+        raise ParseError
