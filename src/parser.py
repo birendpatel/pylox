@@ -166,12 +166,21 @@ class Parser():
             if self.curr_type() == TokenType.RIGHT_PAREN:
                 self.advance()
             else:
-                tok = self.tokens[self.i]
-                msg = "missing right parenthesis"
-                self.err.push(tok.line, msg)
+                self.trap("missing right parenthesis")
         else:
-            tok = self.tokens[self.i]
-            msg = "misplaced symbol {}".format(tok.lexeme)
-            self.err.push(tok.lin, msg)
+            lexeme = (self.tokens[self.i]).lexeme
+            self.trap("misplaced symbol {}".format(lexeme))
 
         return expr
+
+    def trap(self, msg):
+        """\
+        push parameters to error handler then enter panic mode to reset at the
+        next sequence point.
+        """
+        tok = self.tokens[self.i]
+        line = tok.line
+
+        if not self.err.push(line, msg):
+            self.err.grow(1)
+            self.error.push(line, "additional errors found (hidden)")
