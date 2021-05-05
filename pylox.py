@@ -2,6 +2,7 @@
 # MIT License
 
 from src.error import ErrorHandler
+from src.parser import Parser
 from src.tokenizer import Token, Tokenizer
 from sys import argv
 
@@ -31,20 +32,34 @@ def exec_file(fname: str) -> None:
 #execute lox source code
 def run(src: str) -> None:
     tkz = Tokenizer()
-    
+    prs = Parser()
+
     tokens, err = tkz.tokenize(src)
 
     if display_errors(err):
         return
+
     ## DEBUG:
     for i in tokens:
         print(i)
+    ## END DEBUG
+
+    tree, err = prs.parse(tokens)
+
+    if display_errors(err):
+        return
+
+    ## DEBUG
+    print(tree)
+    ## END DEBUG
 
 #error trap
 def display_errors(err) -> bool:
     if err:
+        print("LOX: ERRORS FOUND")
+
         for i in err:
-            print(i)
+            print("\t{}".format(i))
 
         return True
 

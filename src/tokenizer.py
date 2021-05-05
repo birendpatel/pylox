@@ -275,8 +275,9 @@ class Tokenizer():
 
             self.i += 1
 
+        #place EOF synthetically on previous line
         if not self.err:
-            self.tokens.append(Token(TokenType.EOF, self.line, None, None))
+            self.tokens.append(Token(TokenType.EOF, self.line - 1, None, None))
 
         #if there are no errors then tokens must be nonempty
         assert(bool(self.err) == True or bool(self.tokens) == True)
