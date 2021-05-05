@@ -3,6 +3,7 @@
 
 from src.error import ErrorHandler
 from src.parser import Parser
+from src.preprocessor import Preprocessor
 from src.tokenizer import Token, Tokenizer
 from sys import argv
 
@@ -20,38 +21,51 @@ def exec_prompt() -> None:
 def exec_file(fname: str) -> None:
     try:
         with open(fname, 'r') as file:
-            src: str = file.read()
+            p_src: str = file.read()
 
-            if src[-1] != '\n':
-                src += '\n'
+            if p_src[-1] != '\n':
+                p_src += '\n'
 
+            src = preprocess(p_src)
             run(src)
     except FileNotFoundError:
         print("{} file not found".format(fname))
 
+#execute preprocessor
+def preprocess(p_src: str) -> str:
+    global tok_debug
+    global parse_debug
+
+    pps = Preprocessor()
+    src, flags = pps.scan(p_src)
+
+    tok_debug = flags["tok_debug"]
+    parse_debug = flags["parse_debug"]
+    
+    return src
+
 #execute lox source code
 def run(src: str) -> None:
+    #tokenization
     tkz = Tokenizer()
-    prs = Parser()
-
     tokens, err = tkz.tokenize(src)
 
     if display_errors(err):
         return
 
-    ## DEBUG:
-    for i in tokens:
-        print(i)
-    ## END DEBUG
+    if tok_debug:
+        for i in tokens:
+            print(i)
 
+    #parsing
+    prs = Parser()
     tree, err = prs.parse(tokens)
 
     if display_errors(err):
         return
 
-    ## DEBUG
-    print(tree)
-    ## END DEBUG
+    if parse_debug:
+        print(tree)
 
 #error trap
 def display_errors(err) -> bool:
@@ -67,6 +81,9 @@ def display_errors(err) -> bool:
 
 #lox entry point, repl or source
 if __name__ == "__main__":
+    tok_debug = False
+    parse_debug = False
+
     argc: int = len(argv)
 
     if (argc == 1):
