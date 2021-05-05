@@ -59,7 +59,7 @@ def display_errors(err) -> bool:
         print("LOX: ERRORS FOUND")
 
         for i in err:
-            print(i)
+            print("\t{}".format(i))
 
         return True
 

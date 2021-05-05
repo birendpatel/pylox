@@ -166,7 +166,9 @@ class Parser():
             if self.curr_type() == TokenType.RIGHT_PAREN:
                 self.advance()
             else:
-                self.trap("missing right parenthesis")
+                self.trap("missing right parenthesis for grouped expression")
+                #assume that the parenthesis should have been there
+                #continue parsing at the next token
         else:
             lexeme = (self.tokens[self.i]).lexeme
             self.trap("misplaced symbol {}".format(lexeme))
