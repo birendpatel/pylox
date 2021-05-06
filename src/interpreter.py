@@ -48,9 +48,9 @@ class Interpreter():
     def handle_literal(self, node):
         """\
         access unmodified literal value field in token at the literal node. This
-        value was already generated as a byproduct of the tokenization phase. 
+        value was already generated as a byproduct of the tokenization phase.
         """
-        pass
+        return node.val.literal
 
     def handle_grouping(self, node):
         pass
