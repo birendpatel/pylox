@@ -2,6 +2,7 @@
 # MIT License
 
 from src.error import ErrorHandler
+from src.interpreter import Interpreter
 from src.parser import Parser
 from src.preprocessor import Preprocessor
 from src.tokenizer import Token, Tokenizer
@@ -74,7 +75,9 @@ def run(src: str) -> None:
     if display_errors(err):
         return
     else:
-        print(val) #let python handle representations of lox values
+        #let python handle representations of lox values
+        #TODO: formatting
+        print(val)
 
 #error trap
 def display_errors(err) -> bool:

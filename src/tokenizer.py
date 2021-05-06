@@ -219,9 +219,9 @@ class Tokenizer():
 
             #add literal values for true/false to assist the interpreter
             #lox bools will reduce to python bools
-            if tok.TokenType == TokenType.TRUE:
+            if tok.type == TokenType.TRUE:
                 tok.literal = True
-            elif tok.TokenType == TokenType.FALSE:
+            elif tok.type == TokenType.FALSE:
                 tok.literal = False
 
             self.tokens.append(tok)

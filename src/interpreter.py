@@ -13,13 +13,6 @@ class RuntimeError(Exception):
     pass
 
 class Interpreter():
-    jmp_table = {
-        'Binary': Interpreter.handle_binary,
-        'Unary': Interpreter.handle_unary,
-        'Literal': Interpreter.handle_literal,
-        'grouping': Interpreter.handle_grouping
-    }
-
     def __init__(self):
         self.err = ErrorHandler(1)
 
@@ -29,15 +22,15 @@ class Interpreter():
         """
         try:
             val = Interpreter.jmp_table[node.__class__.__name__](self, node)
-            return (val, err)
+            return (val, self.err)
         except RuntimeError:
-            return (None, err)
+            return (None, self.err)
         except KeyError:
             #suppress call stack and surface the error via the lox handler
             name = node.__class__.__name__
             msg = "(INTERNAL ERROR) node {} not in jump table".format(name)
-            err.push(-1, msg)
-            return (None, err)
+            self.err.push(-1, msg)
+            return (None, self.err)
 
     def handle_binary(self, node):
         pass
@@ -54,3 +47,20 @@ class Interpreter():
 
     def handle_grouping(self, node):
         pass
+
+    #class variable
+    #
+    #Required since python 3.9 does not have switches or pattern matching.
+    #The methods could have been implemented into each node class itself. But,
+    #the lox error handler is easier to use if we dispatch from here. I also
+    #prefer to treat the tree nodes as data bags as we did with lexer tokens.
+    #This way, the design is consistent and functionality is relegated to
+    #functions rather than hidden as methods in return values of functions.
+    #source -> f(source) -> tokens -> f(tokens) -> nodes -> f(nodes)
+
+    jmp_table = {
+        'Binary': handle_binary,
+        'Unary': handle_unary,
+        'Literal': handle_literal,
+        'grouping': handle_grouping
+    }
