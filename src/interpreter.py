@@ -21,8 +21,7 @@ class Interpreter():
         depth-first post-order traversal of abstract syntax tree
         """
         try:
-            val = Interpreter.jmp_table[node.__class__.__name__](self, node)
-            return (val, self.err)
+            return (self.traverse(node), self.err)
         except RuntimeError:
             return (None, self.err)
         except KeyError:
@@ -31,6 +30,14 @@ class Interpreter():
             msg = "(INTERNAL ERROR) node {} not in jump table".format(name)
             self.err.push(-1, msg)
             return (None, self.err)
+
+    def traverse(self, node):
+        """\
+        centralized switch mechanism. All node handlers relegate child node
+        traversal to dispatch since python 3.9 does not have switches or
+        pattern matching.
+        """
+        return Interpreter.jmp_table[node.__class__.__name__](self, node)
 
     def handle_binary(self, node):
         pass
@@ -46,7 +53,10 @@ class Interpreter():
         return node.val.literal
 
     def handle_grouping(self, node):
-        pass
+        """\
+        interpret a grouped node "(" <expr> ")"
+        """
+        return self.traverse(node.val)
 
     #class variable
     #
@@ -62,5 +72,5 @@ class Interpreter():
         'Binary': handle_binary,
         'Unary': handle_unary,
         'Literal': handle_literal,
-        'grouping': handle_grouping
+        'Grouping': handle_grouping
     }

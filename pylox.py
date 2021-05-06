@@ -5,7 +5,7 @@ from src.error import ErrorHandler
 from src.interpreter import Interpreter
 from src.parser import Parser
 from src.preprocessor import Preprocessor
-from src.tokenizer import Token, Tokenizer
+from src.tokenizer import Token, TokenType, Tokenizer
 from sys import argv
 
 # lox repl
@@ -57,6 +57,11 @@ def run(src: str) -> None:
     if tok_debug:
         for i in tokens:
             print(i)
+
+    #don't send single EOF token to parser
+    #this allows parser to make stricter assertions while generating the AST
+    if tokens[0].type == TokenType.EOF:
+        return
 
     #parsing
     prs = Parser()
