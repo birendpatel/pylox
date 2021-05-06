@@ -2,9 +2,10 @@
 # MIT License
 
 from src.error import ErrorHandler
+from src.interpreter import Interpreter
 from src.parser import Parser
 from src.preprocessor import Preprocessor
-from src.tokenizer import Token, Tokenizer
+from src.tokenizer import Token, TokenType, Tokenizer
 from sys import argv
 
 # lox repl
@@ -41,7 +42,7 @@ def preprocess(p_src: str) -> str:
 
     tok_debug = flags["tok_debug"]
     parse_debug = flags["parse_debug"]
-    
+
     return src
 
 #execute lox source code
@@ -50,27 +51,43 @@ def run(src: str) -> None:
     tkz = Tokenizer()
     tokens, err = tkz.tokenize(src)
 
-    if display_errors(err):
+    if display_errors(err, "LOX: SYNTAX ERROR"):
         return
 
     if tok_debug:
         for i in tokens:
             print(i)
 
+    #don't send single EOF token to parser
+    #this allows parser to make stricter assertions while generating the AST
+    if tokens[0].type == TokenType.EOF:
+        return
+
     #parsing
     prs = Parser()
     tree, err = prs.parse(tokens)
 
-    if display_errors(err):
+    if display_errors(err, "LOX: GRAMMAR ERROR"):
         return
 
     if parse_debug:
         print(tree)
 
+    #interpretation
+    itr = Interpreter()
+    val, err = itr.interpret(tree)
+
+    if display_errors(err, "LOX: RUNTIME ERROR"):
+        return
+    else:
+        #let python handle representations of lox values
+        #TODO: formatting
+        print(val)
+
 #error trap
-def display_errors(err) -> bool:
+def display_errors(err, header) -> bool:
     if err:
-        print("LOX: ERRORS FOUND")
+        print(header)
 
         for i in err:
             print("\t{}".format(i))
