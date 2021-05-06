@@ -113,19 +113,19 @@ class Interpreter():
     #source -> f(source) -> tokens -> f(tokens) -> nodes -> f(nodes)
 
     jmp_table = {
-        'Binary': handle_binary,
-        'Unary': handle_unary,
-        'Literal': handle_literal,
+        'Binary':   handle_binary,
+        'Unary':    handle_unary,
+        'Literal':  handle_literal,
         'Grouping': handle_grouping
     }
 
     #dispatch for binary node evaluation
     bin_table = {
-        TokenType.MINUS: lambda x, y: x - y,
-        TokenType.STAR: lambda x, y: x * y,
-        TokenType.SLASH: lambda x, y: x / y,
-        TokenType.GREATER: lambda x, y: x > y,
-        TokenType.LESS: lambda x, y: x < y,
-        TokenType.GREATER_EQUAL: lambda x, y: x >= y,
-        TokenType.LESS_EQUAL: lambda x, y: x <= y,
+        TokenType.MINUS:            lambda x, y: x - y,
+        TokenType.STAR:             lambda x, y: x * y,
+        TokenType.SLASH:            lambda x, y: x / y,
+        TokenType.GREATER:          lambda x, y: x > y,
+        TokenType.LESS:             lambda x, y: x < y,
+        TokenType.GREATER_EQUAL:    lambda x, y: x >= y,
+        TokenType.LESS_EQUAL:       lambda x, y: x <= y,
     }
