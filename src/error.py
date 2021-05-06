@@ -14,14 +14,18 @@ class ErrorHandler():
     def push(self, line: int, error: str) -> bool:
         """\
         load an error onto the queue formated as 'line x: description'
-        @line: offending line number
+        @line: offending line number, if negative then supressed
         @error: description
         returns: False if queue is already at maximum capacity
         """
         if len(self.__queue) == self.__limit:
             return False
 
-        msg = "line {}: {}".format(line, error)
+        if line >= 0:
+            msg = "line {}: {}".format(line, error)
+        else:
+            msg = "{}".format(error)
+            
         self.__queue.append(msg)
         return True
 
