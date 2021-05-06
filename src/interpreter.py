@@ -34,13 +34,38 @@ class Interpreter():
     def traverse(self, node):
         """\
         centralized switch mechanism. All node handlers relegate child node
-        traversal to dispatch since python 3.9 does not have switches or
+        traversal to this function since python 3.9 does not have switches or
         pattern matching.
         """
         return Interpreter.jmp_table[node.__class__.__name__](self, node)
 
     def handle_binary(self, node):
-        pass
+        """\
+        evaluate binary nodes where both lval and rval must be a number. If the
+        operator is addition, then both lval and rval may be a string. equality
+        operators may support any mixed types.
+        """
+        lval = self.traverse(node.left)
+        rval = self.traverse(node.right)
+
+        if node.operator.type == TokenType.EQUAL_EQUAL:
+            return lval == rval
+        elif node.operator.type == TokenType.BANG_EQUAL:
+            return lval != rval
+        elif node.operator.type == TokenType.PLUS:
+            if isinstance(lval, float) and isinstance(rval, float):
+                return lval + rval
+            elif isinstance(lval, str) and isinstance(rval, str):
+                return lval + rval
+        else:
+            if isinstance(lval, float) and isinstance(rval, float):
+                return Interpreter.bin_table[node.operator.type](lval, rval)
+
+        line = node.operator.line
+        msg = "cannot perform {} on mismatched types of {} and {}".format(\
+               node.operator.lexeme, lval, rval)
+        self.err.push(msg)
+        raise RuntimeError
 
     def handle_unary(self, node):
         """\
@@ -92,4 +117,15 @@ class Interpreter():
         'Unary': handle_unary,
         'Literal': handle_literal,
         'Grouping': handle_grouping
+    }
+
+    #dispatch for binary node evaluation
+    bin_table = {
+        TokenType.MINUS: lambda x, y: x - y,
+        TokenType.STAR: lambda x, y: x * y,
+        TokenType.SLASH: lambda x, y: x / y,
+        TokenType.GREATER: lambda x, y: x > y,
+        TokenType.LESS: lambda x, y: x < y,
+        TokenType.GREATER_EQUAL: lambda x, y: x >= y,
+        TokenType.LESS_EQUAL: lambda x, y: x <= y,
     }

@@ -87,7 +87,7 @@ def run(src: str) -> None:
 #error trap
 def display_errors(err, header) -> bool:
     if err:
-        print(header")
+        print(header)
 
         for i in err:
             print("\t{}".format(i))
