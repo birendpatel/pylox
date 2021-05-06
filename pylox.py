@@ -51,7 +51,7 @@ def run(src: str) -> None:
     tkz = Tokenizer()
     tokens, err = tkz.tokenize(src)
 
-    if display_errors(err):
+    if display_errors(err, "LOX: SYNTAX ERROR"):
         return
 
     if tok_debug:
@@ -67,7 +67,7 @@ def run(src: str) -> None:
     prs = Parser()
     tree, err = prs.parse(tokens)
 
-    if display_errors(err):
+    if display_errors(err, "LOX: GRAMMAR ERROR"):
         return
 
     if parse_debug:
@@ -77,7 +77,7 @@ def run(src: str) -> None:
     itr = Interpreter()
     val, err = itr.interpret(tree)
 
-    if display_errors(err):
+    if display_errors(err, "LOX: RUNTIME ERROR"):
         return
     else:
         #let python handle representations of lox values
@@ -85,9 +85,9 @@ def run(src: str) -> None:
         print(val)
 
 #error trap
-def display_errors(err) -> bool:
+def display_errors(err, header) -> bool:
     if err:
-        print("LOX: ERRORS FOUND")
+        print(header")
 
         for i in err:
             print("\t{}".format(i))

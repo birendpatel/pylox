@@ -43,6 +43,10 @@ class Interpreter():
         pass
 
     def handle_unary(self, node):
+        """\
+        evaluate unary node where operand of '-' must be a number and operands
+        of '!' evaluate to False only when operand is 'nil' or 'false'
+        """
         val = self.traverse(node.right)
 
         if node.operator.type == TokenType.MINUS:
@@ -57,7 +61,7 @@ class Interpreter():
         elif node.operator.type == TokenType.BANG:
             if val == None or val == False:
                 return True
-                
+
             return False
 
     def handle_literal(self, node):
