@@ -41,7 +41,7 @@ def preprocess(p_src: str) -> str:
 
     tok_debug = flags["tok_debug"]
     parse_debug = flags["parse_debug"]
-    
+
     return src
 
 #execute lox source code
@@ -66,6 +66,15 @@ def run(src: str) -> None:
 
     if parse_debug:
         print(tree)
+
+    #interpretation
+    itr = Interpreter()
+    val, err = itr.interpret(tree)
+
+    if display_errors(err):
+        return
+    else:
+        print(val) #let python handle representations of lox values
 
 #error trap
 def display_errors(err) -> bool:

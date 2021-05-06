@@ -214,7 +214,16 @@ class Tokenizer():
         self.i = j - 1
 
         if word in self.keywords_map:
+            #for keyword 'nil', literal = None is the actual literal value
             tok = Token(self.keywords_map[word], self.line, word, None)
+
+            #add literal values for true/false to assist the interpreter
+            #lox bools will reduce to python bools
+            if tok.TokenType == TokenType.TRUE
+                tok.literal = True
+            elif tok.TokenType == TokenType.FALSE
+                tok.literal = False
+
             self.tokens.append(tok)
         else:
             tok = Token(TokenType.IDENTIFIER, self.line, word, word)
