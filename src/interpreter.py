@@ -43,7 +43,22 @@ class Interpreter():
         pass
 
     def handle_unary(self, node):
-        pass
+        val = self.traverse(node.right)
+
+        if node.operator.type == TokenType.MINUS:
+            if isinstance(val, float):
+                return -1 * float(val)
+
+            line = node.operator.line
+            msg = "operand of '-' must be a number"
+            self.err.push(line, msg)
+            raise RuntimeError
+
+        elif node.operator.type == TokenType.BANG:
+            if val == None or val == False:
+                return True
+                
+            return False
 
     def handle_literal(self, node):
         """\
