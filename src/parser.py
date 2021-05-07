@@ -69,7 +69,7 @@ class Parser():
         """
         tree = []
 
-        while self.curr_type != TokenType.EOF:
+        while self.curr_type() != TokenType.EOF:
             tree.append(self.statement())
 
         return tree
@@ -88,10 +88,15 @@ class Parser():
             self.advance()
             return expr
 
+        #user is missing semicolon
         tok = self.curr_token()
         line = tok.line
-        lexeme = tok.lexeme()
-        msg = "expected ';' before {}".format(lexeme)
+
+        if tok.type == TokenType.EOF:
+            msg = "expected ';' before end of file"
+        else:
+            msg = "expected ';' before {}".format(tok.lexeme)
+
         self.err.push(line, msg)
         raise ParseError
 

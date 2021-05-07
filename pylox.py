@@ -76,7 +76,7 @@ def run(src: str) -> None:
 
     #interpretation
     itr = Interpreter()
-    val, err = itr.interpret(program)
+    exit_status, err = itr.interpret(program)
     display_errors(err, "LOX: RUNTIME ERROR")
 
 #error trap
