@@ -4,19 +4,20 @@
 
 from src.error import ErrorHandler, RuntimeError
 from src.node import Binary, Unary, Literal, Grouping
+from src.node import Generic, Printer
 
 class Interpreter():
     def __init__(self):
         self.err = ErrorHandler(1)
 
-    def interpret(self, node):
+    def interpret(self, program):
         """\
-        depth-first post-order traversal of abstract syntax tree
+        depth-first post-order traversal of program tree
         """
-        try:
-            return (self.expression(node), self.err)
-        except RuntimeError:
-            return (None, self.err)
+        for tree in program:
+            try:
+                tree.interpret(self.err)
+            except RuntimeError:
+                return (1, self.err)
 
-    def expression(self, node):
-        return node.interpret(self.err)
+        return (0, self.err)

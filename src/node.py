@@ -1,10 +1,13 @@
 # Copyright (C) 2021 Biren Patel
 # MIT License
-# abstract syntax tree node classes
+# abstract syntax tree node classes for both statements and expressions
 
 from abc import ABC, abstractmethod
 from src.error import ErrorHandler, RuntimeError
 from src.tokenizer import Token, TokenType
+
+################################################################################
+# expression-type nodes
 
 class expr(ABC):
     """\
@@ -115,3 +118,51 @@ class Grouping():
 
     def interpret(self, err):
         return self.val.interpret(err)
+
+################################################################################
+# statement-type nodes
+# these nodes are essentially identical to expression-type nodes but the
+# underlying abstract base class allows for helpful isinstance() distinctions
+# to be made during parsing and interpretation.
+
+class stmt(ABC):
+    """\
+    abstract base class of all statement-type nodes
+    """
+    @abstractmethod
+    def __repr__(self):
+        """\
+        print AST when preprocessor enforces #pragma parse_debug on
+        """
+        pass
+
+    @abstractmethod
+    def interpret(self, err):
+        """\
+        recursively interpret node and return computed value.
+        """
+        pass
+
+class Generic(stmt):
+    def __init__(self, expr):
+        self.expr = expr
+
+    def __repr__(self):
+        return "(expression statement {})".format(self.expr)
+
+    def interpret(self, err):
+        self.expr.interpret(err)
+        return None
+
+#todo: pretty printing
+class Printer(stmt):
+    def __init__(self, expr):
+        self.expr = expr
+
+    def __repr__(self):
+        return "(print statement {})".format(self.expr)
+
+    def interpret(self, err):
+        val = self.expr.interpret(err)
+        print(val)
+        return None

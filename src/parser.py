@@ -5,6 +5,7 @@
 from src.error import ErrorHandler, ParseError
 from src.tokenizer import Token, TokenType
 from src.node import Binary, Unary, Literal, Grouping
+from src.node import Generic, Printer
 
 class Parser():
     def __init__(self):
@@ -24,13 +25,14 @@ class Parser():
 
         @tokens: list of tokens provided by lexical analysis, tokens[-1] == EOF
         @limit: internal ErrorHandler limit
+        Returns: abstract syntax tree, top level is a list of statements
         """
         self.err = ErrorHandler(limit)
         self.tokens = tokens
         self.i = 0
 
         try:
-            return (self.expression(), self.err)
+            return (self.program(), self.err)
         except ParseError:
             return (None, self.err)
 
@@ -60,6 +62,49 @@ class Parser():
         """
         assert(self.i - 1 >= 0)
         return self.tokens[self.i - 1]
+
+    def program(self):
+        """\
+        <program> := <statement>* EOF
+        """
+        tree = []
+
+        while self.curr_type() != TokenType.EOF:
+            tree.append(self.statement())
+
+        return tree
+
+    def statement(self):
+        """\
+        <statement> := <expression statement> | <print statement> ";"
+        """
+        if self.curr_type() == TokenType.PRINT:
+            self.advance()
+            expr = self.print_stmt()
+        else:
+            expr = self.generic_stmt()
+
+        if self.curr_type() == TokenType.SEMICOLON:
+            self.advance()
+            return expr
+
+        #user is missing semicolon
+        tok = self.curr_token()
+        line = tok.line
+
+        if tok.type == TokenType.EOF:
+            msg = "expected ';' before end of file"
+        else:
+            msg = "expected ';' before {}".format(tok.lexeme)
+
+        self.err.push(line, msg)
+        raise ParseError
+
+    def print_stmt(self):
+        return Printer(self.expression())
+
+    def generic_stmt(self):
+        return Generic(self.expression())
 
     def expression(self):
         """\

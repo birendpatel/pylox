@@ -65,24 +65,19 @@ def run(src: str) -> None:
 
     #parsing
     prs = Parser()
-    tree, err = prs.parse(tokens)
+    program, err = prs.parse(tokens)
 
     if display_errors(err, "LOX: GRAMMAR ERROR"):
         return
 
     if parse_debug:
-        print(tree)
+        for tree in program:
+            print(tree)
 
     #interpretation
     itr = Interpreter()
-    val, err = itr.interpret(tree)
-
-    if display_errors(err, "LOX: RUNTIME ERROR"):
-        return
-    else:
-        #let python handle representations of lox values
-        #TODO: formatting
-        print(val)
+    exit_status, err = itr.interpret(program)
+    display_errors(err, "LOX: RUNTIME ERROR")
 
 #error trap
 def display_errors(err, header) -> bool:
