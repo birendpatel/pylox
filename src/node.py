@@ -43,7 +43,7 @@ class Unary():
             return "({} {})".format(self.operator.lexeme, self.right)
 
         def interpret(self, err):
-            val = self.right.interpret()
+            val = self.right.interpret(err)
 
             if self.operator.type == TokenType.MINUS:
                 if isinstance(val, float):
@@ -51,7 +51,7 @@ class Unary():
 
                 line = self.operator.line
                 msg = "operand of '-' must be a number"
-                self.err.push(line, msg)
+                err.push(line, msg)
                 raise RuntimeError
 
             elif self.operator.type == TokenType.BANG:
@@ -71,8 +71,8 @@ class Binary():
         return msg.format(self.operator.lexeme, self.left, self.right)
 
     def interpret(self, err):
-        lval = self.left.interpret()
-        rval = self.right.interpret()
+        lval = self.left.interpret(err)
+        rval = self.right.interpret(err)
 
         if self.operator.type == TokenType.EQUAL_EQUAL:
             return lval == rval
@@ -85,12 +85,12 @@ class Binary():
                 return lval + rval
         else:
             if isinstance(lval, float) and isinstance(rval, float):
-                return Binary.dispatch(self.operator.type)(lval, rval)
+                return Binary.dispatch[self.operator.type](lval, rval)
 
         line = self.operator.line
         msg = "cannot perform {} on mismatched types of {} and {}".format(\
                self.operator.lexeme, lval, rval)
-        self.err.push(line, msg)
+        err.push(line, msg)
         raise RuntimeError
 
 
@@ -112,4 +112,4 @@ class Grouping():
         return "(group {})".format(self.val)
 
     def interpret(self, err):
-        return self.val.interpret()
+        return self.val.interpret(err)
