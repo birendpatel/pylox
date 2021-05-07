@@ -74,27 +74,29 @@ class Binary():
         lval = self.left.interpret(err)
         rval = self.right.interpret(err)
 
-        if self.operator.type == TokenType.EQUAL_EQUAL:
-            return lval == rval
-        elif self.operator.type == TokenType.BANG_EQUAL:
-            return lval != rval
-        elif self.operator.type == TokenType.PLUS:
-            if isinstance(lval, float) and isinstance(rval, float):
+        type = self.operator.type
+
+        if type in Binary.dispatch_any:
+            return Binary.dispatch_any[type](lval, rval)
+        elif isinstance(lval, float) and isinstance(rval, float):
+            return Binary.dispatch_float[type](lval, rval)
+        elif type == TokenType.PLUS:
+            if isinstance(lval, str) and isinstance(rval, str):
                 return lval + rval
-            elif isinstance(lval, str) and isinstance(rval, str):
-                return lval + rval
-        else:
-            if isinstance(lval, float) and isinstance(rval, float):
-                return Binary.dispatch[self.operator.type](lval, rval)
 
         line = self.operator.line
-        msg = "cannot perform {} on mismatched types of {} and {}".format(\
-               self.operator.lexeme, lval, rval)
+        lexeme = self.operator.lexeme
+        msg = "cannot perform {} on mismatched types".format(lexeme)
         err.push(line, msg)
         raise RuntimeError
 
+    dispatch_any = {
+        TokenType.EQUAL_EQUAL:      lambda x, y: x == y,
+        TokenType.BANG_EQUAL:       lambda x, y: x != y
+    }
 
-    dispatch = {
+    dispatch_float = {
+        TokenType.PLUS:             lambda x, y: x + y,
         TokenType.MINUS:            lambda x, y: x - y,
         TokenType.STAR:             lambda x, y: x * y,
         TokenType.SLASH:            lambda x, y: x / y,
