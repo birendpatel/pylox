@@ -86,7 +86,7 @@ class Binary():
 
         line = self.operator.line
         lexeme = self.operator.lexeme
-        msg = "cannot perform {} on mismatched types".format(lexeme)
+        msg = "cannot perform '{}' on mismatched types".format(lexeme)
         err.push(line, msg)
         raise RuntimeError
 
