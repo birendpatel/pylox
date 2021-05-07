@@ -18,7 +18,8 @@ class Interpreter():
         except RuntimeError:
             return (None, self.err)
         except KeyError:
-            #suppress call stack and surface the error via the lox handler
+            #suppress the python call stack
+            #instead, surface the error via the lox handler
             name = node.__class__.__name__
             msg = "(INTERNAL ERROR) node {} not in jump table".format(name)
             self.err.push(-1, msg)
