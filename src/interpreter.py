@@ -4,7 +4,6 @@
 
 from src.error import ErrorHandler, RuntimeError
 from src.node import Binary, Unary, Literal, Grouping
-from src.tokenizer import Token, TokenType
 
 class Interpreter():
     def __init__(self):

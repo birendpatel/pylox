@@ -2,7 +2,9 @@
 # MIT License
 # abstract syntax tree node classes
 
-from abc import ABC
+from abc import ABC, abstractmethod
+from src.error import ErrorHandler, RuntimeError
+from src.tokenizer import Token, TokenType
 
 class expr(ABC):
     """\
