@@ -17,6 +17,7 @@ class Interpreter():
         for tree in program:
             try:
                 tree.interpret(self.err)
-                return (0, self.err)
             except RuntimeError:
                 return (1, self.err)
+
+        return (0, self.err)
