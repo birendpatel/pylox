@@ -2,15 +2,9 @@
 # MIT License
 # Generate an abstract syntax tree via a recusive descent parser
 
-from src.error import ErrorHandler
+from src.error import ErrorHandler, ParseError
 from src.tokenizer import Token, TokenType
 from src.node import Binary, Unary, Literal, Grouping
-
-class ParseError(Exception):
-    """/
-    base class to handle errors that occur during recursive descent
-    """
-    pass
 
 class Parser():
     def __init__(self):

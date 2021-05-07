@@ -1,6 +1,18 @@
 # Copyright (C) 2021, Biren Patel
 # MIT License
-# Error handler to queue errors found during lox source interpretation
+# User defined errors and error handler to queue errors during interpretation
+
+class ParseError(Exception):
+    """/
+    base class to handle errors that occur during recursive descent
+    """
+    pass
+
+class RuntimeError(Exception):
+    """\
+    handles lox runtime errors that occur as the interpreter unwinds.
+    """
+    pass
 
 class ErrorHandler():
     def __init__(self, limit: int = 10) -> None:
@@ -25,7 +37,7 @@ class ErrorHandler():
             msg = "line {}: {}".format(line, error)
         else:
             msg = "{}".format(error)
-            
+
         self.__queue.append(msg)
         return True
 
