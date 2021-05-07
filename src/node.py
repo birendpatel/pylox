@@ -151,8 +151,10 @@ class Generic(stmt):
         return "(expression statement {})".format(self.expr)
 
     def interpret(self, err):
-        pass
+        self.expr.interpret(err)
+        return None
 
+#todo: pretty printing
 class Printer(stmt):
     def __init__(self, expr):
         self.expr = expr
@@ -162,6 +164,5 @@ class Printer(stmt):
 
     def interpret(self, err):
         val = self.expr.interpret(err)
-
-        #todo: pretty printing
         print(val)
+        return None
