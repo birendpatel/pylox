@@ -19,7 +19,7 @@ class Parser():
         self.i = 0
         self.ast = None
 
-    def parse(self, tokens, limit = 3):
+    def parse(self, tokens, limit = 10):
         """\
         recursive descent entry point
 
@@ -75,7 +75,11 @@ class Parser():
             if self.curr_type() == TokenType.SEMICOLON:
                 self.advance()
             else:
-                self.trap("expected ';'")
+                tok = self.curr_token()
+                if tok.type == TokenType.EOF:
+                    self.trap("expected ';' at end of file")
+                else:
+                    self.trap("expected ';' before {}".format(tok.lexeme))
 
         assert(self.curr_type() == TokenType.EOF)
         return tree
@@ -246,11 +250,15 @@ class Parser():
             #passing the EOF token along the call stack. The else branch can
             #handle this issue, but its not user friendly because it presents
             #a EOF:"None" lexeme to the user.
+            #
+            #trap is at EOF so no need to create a dummy expr for return
             tok = self.prev_token()
             self.trap("misplaced symbol '{}' at end of file".format(tok.lexeme))
         else:
             lexeme = (self.tokens[self.i]).lexeme
             self.trap("misplaced symbol '{}'".format(lexeme))
+            #dummy statement will be added to program tree
+            expr = None
 
         return expr
 
@@ -266,5 +274,15 @@ class Parser():
             self.err.grow(1)
             self.error.push(line, "additional errors found (hidden)")
 
-        #synchronization occurs here once statements are implemented
-        raise ParseError
+        #synchronize parser to continue at next program statement
+        types = set([TokenType.CLASS, TokenType.FUN, TokenType.VAR, \
+                     TokenType.FOR, TokenType.IF, TokenType.WHILE, \
+                     TokenType.PRINT, TokenType.RETURN])
+
+        while self.curr_type() not in types:
+            if self.curr_type() == TokenType.EOF:
+                #no statements left in program so no need to continue parsing
+                #unwind call stack back to self.program and let it handle return
+                raise ParseError
+            else:
+                self.advance()
