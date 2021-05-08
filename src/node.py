@@ -148,7 +148,7 @@ class Assignment(expr):
         self.rval = rval
 
     def __repr__(self):
-        return "= {} {}".format(self.lval.name, self.rval)
+        return "(= {} {})".format(self.lval.lexeme, self.rval)
 
     def interpret(self, err, env):
         key = self.lval.lexeme
@@ -161,6 +161,8 @@ class Assignment(expr):
             msg = "variable '{}' not declared prior to assignment".format(key)
             err.push(line, msg)
             raise RuntimeError
+
+        return val
 
 ################################################################################
 # statement-type nodes
