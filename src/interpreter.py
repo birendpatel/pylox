@@ -3,12 +3,18 @@
 # Tree walk interpreter
 
 from src.error import ErrorHandler, RuntimeError
+from src.environment import Environment
 from src.node import Binary, Unary, Literal, Grouping
 from src.node import Generic, Printer
 
 class Interpreter():
-    def __init__(self):
+    def __init__(self, env):
         self.err = ErrorHandler(1)
+
+        if env:
+            self.env = env
+        else:
+            self.env = Environment(None)
 
     def interpret(self, program):
         """\
@@ -16,8 +22,8 @@ class Interpreter():
         """
         for tree in program:
             try:
-                tree.interpret(self.err)
+                tree.interpret(self.err, self.env)
             except RuntimeError:
-                return (1, self.err)
+                return (1, self.err, self.env)
 
-        return (0, self.err)
+        return (0, self.err, self.env)

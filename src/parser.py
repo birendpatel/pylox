@@ -4,8 +4,8 @@
 
 from src.error import ErrorHandler, ParseError
 from src.tokenizer import Token, TokenType
-from src.node import Binary, Unary, Literal, Grouping
-from src.node import Generic, Printer
+from src.node import Binary, Unary, Variable, Literal, Grouping
+from src.node import Generic, Printer, VariableDeclaration
 
 class Parser():
     def __init__(self):
@@ -19,7 +19,7 @@ class Parser():
         self.i = 0
         self.ast = None
 
-    def parse(self, tokens, limit = 3):
+    def parse(self, tokens, limit = 10):
         """\
         recursive descent entry point
 
@@ -65,14 +65,56 @@ class Parser():
 
     def program(self):
         """\
-        <program> := <statement>* EOF
+        <program> := <declaration>* EOF
         """
         tree = []
 
         while self.curr_type() != TokenType.EOF:
-            tree.append(self.statement())
+            tree.append(self.declaration())
 
+            if self.curr_type() == TokenType.SEMICOLON:
+                self.advance()
+            else:
+                tok = self.curr_token()
+                if tok.type == TokenType.EOF:
+                    self.trap("expected ';' at end of file")
+                else:
+                    self.trap("expected ';' before {}".format(tok.lexeme))
+
+        assert(self.curr_type() == TokenType.EOF)
         return tree
+
+    def declaration(self):
+        """\
+        <declaration> := <variable declaration> | <statement>
+        """
+        if self.curr_type() == TokenType.VAR:
+            self.advance()
+            return self.var_declaration()
+
+        return self.statement()
+
+    def var_declaration(self):
+        """\
+        <var_declaration> := "var" IDENTIFIER ("=" <expression>)? ";"
+        """
+        name = None
+
+        #if no initializer is present, assume that there was actually
+        #an intializer to nil, i.e., var x = nil; instead of var x;
+        initializer = Literal(Token(TokenType.NIL, -1, "nil", None))
+
+        if self.curr_type() == TokenType.IDENTIFIER:
+            name = self.curr_token()
+            self.advance()
+
+            if self.curr_type() == TokenType.EQUAL:
+                self.advance()
+                initializer = self.expression()
+        else:
+            self.trap("missing variable identifier")
+
+        return VariableDeclaration(name, initializer)
 
     def statement(self):
         """\
@@ -84,26 +126,18 @@ class Parser():
         else:
             expr = self.generic_stmt()
 
-        if self.curr_type() == TokenType.SEMICOLON:
-            self.advance()
-            return expr
-
-        #user is missing semicolon
-        tok = self.curr_token()
-        line = tok.line
-
-        if tok.type == TokenType.EOF:
-            msg = "expected ';' before end of file"
-        else:
-            msg = "expected ';' before {}".format(tok.lexeme)
-
-        self.err.push(line, msg)
-        raise ParseError
+        return expr
 
     def print_stmt(self):
+        """\
+        <print statement> := "print" <expression> ";"
+        """
         return Printer(self.expression())
 
     def generic_stmt(self):
+        """\
+        <expression statement> := <expression> ";"
+        """
         return Generic(self.expression())
 
     def expression(self):
@@ -215,17 +249,24 @@ class Parser():
                 self.advance()
             else:
                 self.trap("missing right parenthesis for grouped expression")
+        elif self.curr_type() == TokenType.IDENTIFIER:
+            expr = Variable(self.curr_token())
+            self.advance()
         elif self.curr_type() == TokenType.EOF:
             #this situation occurs when the user has a grammar error at the
             #end of file such as "3-". In this situation, the parser has been
             #passing the EOF token along the call stack. The else branch can
             #handle this issue, but its not user friendly because it presents
             #a EOF:"None" lexeme to the user.
+            #
+            #trap is at EOF so no need to create a dummy expr for return
             tok = self.prev_token()
             self.trap("misplaced symbol '{}' at end of file".format(tok.lexeme))
         else:
             lexeme = (self.tokens[self.i]).lexeme
             self.trap("misplaced symbol '{}'".format(lexeme))
+            #dummy statement will be added to program tree
+            expr = None
 
         return expr
 
@@ -241,5 +282,15 @@ class Parser():
             self.err.grow(1)
             self.error.push(line, "additional errors found (hidden)")
 
-        #synchronization occurs here once statements are implemented
-        raise ParseError
+        #synchronize parser to continue at next program statement
+        types = set([TokenType.CLASS, TokenType.FUN, TokenType.VAR, \
+                     TokenType.FOR, TokenType.IF, TokenType.WHILE, \
+                     TokenType.PRINT, TokenType.RETURN])
+
+        while self.curr_type() not in types:
+            if self.curr_type() == TokenType.EOF:
+                #no statements left in program so no need to continue parsing
+                #unwind call stack back to self.program and let it handle return
+                raise ParseError
+            else:
+                self.advance()

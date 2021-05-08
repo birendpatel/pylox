@@ -4,6 +4,7 @@
 
 from abc import ABC, abstractmethod
 from src.error import ErrorHandler, RuntimeError
+from src.environment import Environment
 from src.tokenizer import Token, TokenType
 
 ################################################################################
@@ -21,49 +22,70 @@ class expr(ABC):
         pass
 
     @abstractmethod
-    def interpret(self, err):
+    def interpret(self, err, env):
         """\
         recursively interpret node and return computed value.
         """
         pass
 
-class Literal():
-        def __init__(self, val):
-            self.val = val
+class Literal(expr):
+    def __init__(self, val):
+        self.val = val
 
-        def __repr__(self):
-            return "{}".format(self.val.lexeme)
+    def __repr__(self):
+        return "{}".format(self.val.lexeme)
 
-        def interpret(self, err):
-            return self.val.literal
+    def interpret(self, err, env):
+        return self.val.literal
 
-class Unary():
-        def __init__(self, operator, right):
-            self.operator = operator
-            self.right = right
+class Variable(expr):
+    def __init__(self, name):
+        #name is just an identifier-type token;
+        #only the lexeme itself gets inserted into the environement.
+        #storing the entire token here just allows for clearer error msgs.
+        self.name = name
 
-        def __repr__(self):
-            return "({} {})".format(self.operator.lexeme, self.right)
+    def __repr__(self):
+        return "{}".format(self.name.lexeme)
 
-        def interpret(self, err):
-            val = self.right.interpret(err)
+    def interpret(self, err, env):
+        key = self.name.lexeme
 
-            if self.operator.type == TokenType.MINUS:
-                if isinstance(val, float):
-                    return -1 * float(val)
+        try:
+            return env.search(key)
+        except KeyError:
+            line = self.name.line
+            msg = "undefined variable {}".format(key)
+            err.push(line, msg)
+            raise RuntimeError
 
-                line = self.operator.line
-                msg = "operand of '-' must be a number"
-                err.push(line, msg)
-                raise RuntimeError
+class Unary(expr):
+    def __init__(self, operator, right):
+        self.operator = operator
+        self.right = right
 
-            elif self.operator.type == TokenType.BANG:
-                if val == None or val == False:
-                    return True
+    def __repr__(self):
+        return "({} {})".format(self.operator.lexeme, self.right)
 
-                return False
+    def interpret(self, err, env):
+        val = self.right.interpret(err, env)
 
-class Binary():
+        if self.operator.type == TokenType.MINUS:
+            if isinstance(val, float):
+                return -1 * float(val)
+
+            line = self.operator.line
+            msg = "operand of '-' must be a number"
+            err.push(line, msg)
+            raise RuntimeError
+
+        elif self.operator.type == TokenType.BANG:
+            if val == None or val == False:
+                return True
+
+            return False
+
+class Binary(expr):
     def __init__(self, left, operator, right):
         self.left = left
         self.operator = operator
@@ -73,9 +95,9 @@ class Binary():
         msg = "({} {} {})"
         return msg.format(self.operator.lexeme, self.left, self.right)
 
-    def interpret(self, err):
-        lval = self.left.interpret(err)
-        rval = self.right.interpret(err)
+    def interpret(self, err, env):
+        lval = self.left.interpret(err, env)
+        rval = self.right.interpret(err, env)
 
         type = self.operator.type
 
@@ -109,15 +131,15 @@ class Binary():
         TokenType.LESS_EQUAL:       lambda x, y: x <= y,
     }
 
-class Grouping():
+class Grouping(expr):
     def __init__(self, val):
         self.val = val
 
     def __repr__(self):
         return "(group {})".format(self.val)
 
-    def interpret(self, err):
-        return self.val.interpret(err)
+    def interpret(self, err, env):
+        return self.val.interpret(err, env)
 
 ################################################################################
 # statement-type nodes
@@ -137,7 +159,7 @@ class stmt(ABC):
         pass
 
     @abstractmethod
-    def interpret(self, err):
+    def interpret(self, err, env):
         """\
         recursively interpret node and return computed value.
         """
@@ -148,10 +170,10 @@ class Generic(stmt):
         self.expr = expr
 
     def __repr__(self):
-        return "(expression statement {})".format(self.expr)
+        return "(statement {})".format(self.expr)
 
-    def interpret(self, err):
-        self.expr.interpret(err)
+    def interpret(self, err, env):
+        self.expr.interpret(err, env)
         return None
 
 #todo: pretty printing
@@ -160,9 +182,26 @@ class Printer(stmt):
         self.expr = expr
 
     def __repr__(self):
-        return "(print statement {})".format(self.expr)
+        return "(print {})".format(self.expr)
 
-    def interpret(self, err):
-        val = self.expr.interpret(err)
+    def interpret(self, err, env):
+        val = self.expr.interpret(err, env)
         print(val)
         return None
+
+class VariableDeclaration(stmt):
+    def __init__(self, name, initializer):
+        self.name = name
+        self.initializer = initializer
+
+    def __repr__(self):
+        return "(= {} {})".format(self.name.lexeme, self.initializer)
+
+    def interpret(self, err, env):
+        """\
+        insert k-v pair into environment. if the initializer is None, lox will
+        interpret this as nil.
+        """
+        key = self.name.lexeme
+        value = self.initializer.interpret(err, env)
+        env.insert(key, value)
