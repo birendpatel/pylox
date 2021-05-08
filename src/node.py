@@ -159,7 +159,7 @@ class Generic(stmt):
         self.expr = expr
 
     def __repr__(self):
-        return "(expression statement {})".format(self.expr)
+        return "(statement {})".format(self.expr)
 
     def interpret(self, err):
         self.expr.interpret(err)
@@ -171,7 +171,7 @@ class Printer(stmt):
         self.expr = expr
 
     def __repr__(self):
-        return "(print statement {})".format(self.expr)
+        return "(print {})".format(self.expr)
 
     def interpret(self, err):
         val = self.expr.interpret(err)

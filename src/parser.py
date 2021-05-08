@@ -96,7 +96,7 @@ class Parser():
         """
         name = self.primary()
 
-        if curr_type() == TokenType.EQUAL:
+        if self.curr_type() == TokenType.EQUAL:
             self.advance()
             initializer = self.expression()
         else:
