@@ -65,14 +65,37 @@ class Parser():
 
     def program(self):
         """\
-        <program> := <statement>* EOF
+        <program> := <declaration>* EOF
         """
         tree = []
 
         while self.curr_type() != TokenType.EOF:
             tree.append(self.statement())
 
+            if self.curr_type() == TokenType.SEMICOLON:
+                self.advance()
+            else:
+                tok = self.curr_token()
+                line = tok.line
+
+                if tok.type == TokenType.EOF:
+                    msg = "expected ';' before end of file"
+                else:
+                    msg = "expected ';' before {}".format(tok.lexeme)
+
+                self.err.push(line, msg)
+                raise ParseError
+
         return tree
+
+    def declaration(self):
+        """\
+        <declaration> := <variable declaration> | <statement>
+        """
+        if self.curr_type() == TokenType.VAR:
+            self.advance()
+
+        return self.statement()
 
     def statement(self):
         """\
@@ -84,26 +107,18 @@ class Parser():
         else:
             expr = self.generic_stmt()
 
-        if self.curr_type() == TokenType.SEMICOLON:
-            self.advance()
-            return expr
-
-        #user is missing semicolon
-        tok = self.curr_token()
-        line = tok.line
-
-        if tok.type == TokenType.EOF:
-            msg = "expected ';' before end of file"
-        else:
-            msg = "expected ';' before {}".format(tok.lexeme)
-
-        self.err.push(line, msg)
-        raise ParseError
+        return expr
 
     def print_stmt(self):
+        """\
+        <print statement> := "print" <expression> ";"
+        """
         return Printer(self.expression())
 
     def generic_stmt(self):
+        """\
+        <expression statement> := <expression> ";"
+        """
         return Generic(self.expression())
 
     def expression(self):
