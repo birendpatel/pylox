@@ -85,7 +85,7 @@ def run(src: str) -> None:
     display_errors(err, "LOX: RUNTIME ERROR")
 
     if env_debug:
-        print(env)
+        print(env.map)
 
 #error trap
 def display_errors(err, header) -> bool:
