@@ -195,9 +195,6 @@ class VariableDeclaration(stmt):
         self.initializer = initializer
 
     def __repr__(self):
-        if self.initializer is None:
-            return "(= {} nil)".format(self.name)
-
         return "(= {} {})".format(self.name.lexeme, self.initializer)
 
     def interpret(self, err, env):

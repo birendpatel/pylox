@@ -2,6 +2,7 @@
 # MIT License
 
 from src.error import ErrorHandler
+from src.environment import Environment
 from src.interpreter import Interpreter
 from src.parser import Parser
 from src.preprocessor import Preprocessor
@@ -47,6 +48,8 @@ def preprocess(p_src: str) -> str:
 
 #execute lox source code
 def run(src: str) -> None:
+    global env
+
     #tokenization
     tkz = Tokenizer()
     tokens, err = tkz.tokenize(src)
@@ -75,8 +78,11 @@ def run(src: str) -> None:
             print(tree)
 
     #interpretation
-    itr = Interpreter()
-    exit_status, err = itr.interpret(program)
+    #for the REPL, a global environment is maintained.
+    #this is actually done because it allowed me to export the environment to
+    #disk and play around with some other experiments.
+    itr = Interpreter(env)
+    exit_status, err, env = itr.interpret(program)
     display_errors(err, "LOX: RUNTIME ERROR")
 
 #error trap
@@ -95,6 +101,7 @@ def display_errors(err, header) -> bool:
 if __name__ == "__main__":
     tok_debug = False
     parse_debug = False
+    env = None
 
     argc: int = len(argv)
 

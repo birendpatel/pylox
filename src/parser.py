@@ -99,7 +99,10 @@ class Parser():
         <var_declaration> := "var" IDENTIFIER ("=" <expression>)? ";"
         """
         name = None
-        initializer = None
+
+        #if no initializer is present, assume that there was actually
+        #an intializer to nil, i.e., var x = nil; instead of var x;
+        initializer = Literal(Token(TokenType.NIL, -1, "nil", None))
 
         if self.curr_type() == TokenType.IDENTIFIER:
             name = self.curr_token()
