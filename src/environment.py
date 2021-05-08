@@ -23,10 +23,7 @@ class Environment():
         """\
         access a k-v pair from the environment. if it does not exist, search
         the parent environments. if it does not exist in the entire environment
-        chain, a runtime error is invoked.
+        chain, the python KeyError propogates back to the calling tree node.
         """
-        try:
-            return self.map[key]
-            #todo: search parent environment
-        except KeyError:
-            raise RuntimeError
+        return self.map[key]
+        #todo: search parent environment

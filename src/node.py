@@ -4,6 +4,7 @@
 
 from abc import ABC, abstractmethod
 from src.error import ErrorHandler, RuntimeError
+from src.environment import Environment
 from src.tokenizer import Token, TokenType
 
 ################################################################################
@@ -21,7 +22,7 @@ class expr(ABC):
         pass
 
     @abstractmethod
-    def interpret(self, err):
+    def interpret(self, err, env):
         """\
         recursively interpret node and return computed value.
         """
@@ -34,7 +35,7 @@ class Literal(expr):
     def __repr__(self):
         return "{}".format(self.val.lexeme)
 
-    def interpret(self, err):
+    def interpret(self, err, env):
         return self.val.literal
 
 class Variable(expr):
@@ -44,9 +45,16 @@ class Variable(expr):
     def __repr__(self):
         return "{}".format(self.name.lexeme)
 
-    def interpret(self, err):
-        pass
+    def interpret(self, err, env):
+        key = self.name.lexeme
 
+        try:
+            return env.search(key)
+        except KeyError:
+            line = self.name.line
+            msg = "undefined variable {}".format(key)
+            err.push(line, msg)
+            raise RuntimeError
 
 class Unary(expr):
     def __init__(self, operator, right):
@@ -56,8 +64,8 @@ class Unary(expr):
     def __repr__(self):
         return "({} {})".format(self.operator.lexeme, self.right)
 
-    def interpret(self, err):
-        val = self.right.interpret(err)
+    def interpret(self, err, env):
+        val = self.right.interpret(err, env)
 
         if self.operator.type == TokenType.MINUS:
             if isinstance(val, float):
@@ -84,9 +92,9 @@ class Binary(expr):
         msg = "({} {} {})"
         return msg.format(self.operator.lexeme, self.left, self.right)
 
-    def interpret(self, err):
-        lval = self.left.interpret(err)
-        rval = self.right.interpret(err)
+    def interpret(self, err, env):
+        lval = self.left.interpret(err, env)
+        rval = self.right.interpret(err, env)
 
         type = self.operator.type
 
@@ -127,8 +135,8 @@ class Grouping(expr):
     def __repr__(self):
         return "(group {})".format(self.val)
 
-    def interpret(self, err):
-        return self.val.interpret(err)
+    def interpret(self, err, env):
+        return self.val.interpret(err, env)
 
 ################################################################################
 # statement-type nodes
@@ -148,7 +156,7 @@ class stmt(ABC):
         pass
 
     @abstractmethod
-    def interpret(self, err):
+    def interpret(self, err, env):
         """\
         recursively interpret node and return computed value.
         """
@@ -161,8 +169,8 @@ class Generic(stmt):
     def __repr__(self):
         return "(statement {})".format(self.expr)
 
-    def interpret(self, err):
-        self.expr.interpret(err)
+    def interpret(self, err, env):
+        self.expr.interpret(err, env)
         return None
 
 #todo: pretty printing
@@ -173,8 +181,8 @@ class Printer(stmt):
     def __repr__(self):
         return "(print {})".format(self.expr)
 
-    def interpret(self, err):
-        val = self.expr.interpret(err)
+    def interpret(self, err, env):
+        val = self.expr.interpret(err, env)
         print(val)
         return None
 
@@ -189,5 +197,5 @@ class VariableDeclaration(stmt):
 
         return "(= {} {})".format(self.name, self.initializer)
 
-    def interpret(self, err):
+    def interpret(self, err, env):
         pass
