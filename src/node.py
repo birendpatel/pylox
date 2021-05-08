@@ -40,6 +40,9 @@ class Literal(expr):
 
 class Variable(expr):
     def __init__(self, name):
+        #name is just an identifier-type token;
+        #only the lexeme itself gets inserted into the environement.
+        #storing the entire token here just allows for clearer error msgs.
         self.name = name
 
     def __repr__(self):
@@ -195,7 +198,7 @@ class VariableDeclaration(stmt):
         if self.initializer is None:
             return "(= {} nil)".format(self.name)
 
-        return "(= {} {})".format(self.name, self.initializer)
+        return "(= {} {})".format(self.name.lexeme, self.initializer)
 
     def interpret(self, err, env):
         """\
@@ -203,5 +206,5 @@ class VariableDeclaration(stmt):
         interpret this as nil.
         """
         key = self.name.lexeme
-        value = self.initializer
+        value = self.initializer.interpret(err, env)
         env.insert(key, value)
