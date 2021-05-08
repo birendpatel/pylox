@@ -27,43 +27,54 @@ class expr(ABC):
         """
         pass
 
-class Literal():
-        def __init__(self, val):
-            self.val = val
+class Literal(expr):
+    def __init__(self, val):
+        self.val = val
 
-        def __repr__(self):
-            return "{}".format(self.val.lexeme)
+    def __repr__(self):
+        return "{}".format(self.val.lexeme)
 
-        def interpret(self, err):
-            return self.val.literal
+    def interpret(self, err):
+        return self.val.literal
 
-class Unary():
-        def __init__(self, operator, right):
-            self.operator = operator
-            self.right = right
+class Variable(expr):
+    def __init__(self, name):
+        self.name = name
 
-        def __repr__(self):
-            return "({} {})".format(self.operator.lexeme, self.right)
+    def __repr__(self):
+        return "{}".format(self.name.lexeme)
 
-        def interpret(self, err):
-            val = self.right.interpret(err)
+    def interpret(self, err):
+        pass
 
-            if self.operator.type == TokenType.MINUS:
-                if isinstance(val, float):
-                    return -1 * float(val)
 
-                line = self.operator.line
-                msg = "operand of '-' must be a number"
-                err.push(line, msg)
-                raise RuntimeError
+class Unary(expr):
+    def __init__(self, operator, right):
+        self.operator = operator
+        self.right = right
 
-            elif self.operator.type == TokenType.BANG:
-                if val == None or val == False:
-                    return True
+    def __repr__(self):
+        return "({} {})".format(self.operator.lexeme, self.right)
 
-                return False
+    def interpret(self, err):
+        val = self.right.interpret(err)
 
-class Binary():
+        if self.operator.type == TokenType.MINUS:
+            if isinstance(val, float):
+                return -1 * float(val)
+
+            line = self.operator.line
+            msg = "operand of '-' must be a number"
+            err.push(line, msg)
+            raise RuntimeError
+
+        elif self.operator.type == TokenType.BANG:
+            if val == None or val == False:
+                return True
+
+            return False
+
+class Binary(expr):
     def __init__(self, left, operator, right):
         self.left = left
         self.operator = operator
@@ -109,7 +120,7 @@ class Binary():
         TokenType.LESS_EQUAL:       lambda x, y: x <= y,
     }
 
-class Grouping():
+class Grouping(expr):
     def __init__(self, val):
         self.val = val
 
@@ -166,3 +177,17 @@ class Printer(stmt):
         val = self.expr.interpret(err)
         print(val)
         return None
+
+class VariableDeclaration(stmt):
+    def __init__(self, name, initializer):
+        self.name = name
+        self.initializer = initializer
+
+    def __repr__(self):
+        if self.initializer is None:
+            return "(= {} nil)".format(self.name)
+
+        return "(= {} {})".format(self.name, self.initializer)
+
+    def interpret(self, err):
+        pass

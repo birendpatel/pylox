@@ -4,8 +4,8 @@
 
 from src.error import ErrorHandler, ParseError
 from src.tokenizer import Token, TokenType
-from src.node import Binary, Unary, Literal, Grouping
-from src.node import Generic, Printer
+from src.node import Binary, Unary, Variable, Literal, Grouping
+from src.node import Generic, Printer, VariableDeclaration
 
 class Parser():
     def __init__(self):
@@ -70,22 +70,14 @@ class Parser():
         tree = []
 
         while self.curr_type() != TokenType.EOF:
-            tree.append(self.statement())
+            tree.append(self.declaration())
 
             if self.curr_type() == TokenType.SEMICOLON:
                 self.advance()
             else:
-                tok = self.curr_token()
-                line = tok.line
+                self.trap("expected ';'")
 
-                if tok.type == TokenType.EOF:
-                    msg = "expected ';' before end of file"
-                else:
-                    msg = "expected ';' before {}".format(tok.lexeme)
-
-                self.err.push(line, msg)
-                raise ParseError
-
+        assert(self.curr_type() == TokenType.EOF)
         return tree
 
     def declaration(self):
@@ -94,8 +86,23 @@ class Parser():
         """
         if self.curr_type() == TokenType.VAR:
             self.advance()
+            return self.var_declaration()
 
         return self.statement()
+
+    def var_declaration(self):
+        """\
+        <var_declaration> := "var" IDENTIFIER ("=" <expression>)? ";"
+        """
+        name = self.primary()
+
+        if curr_type() == TokenType.EQUAL:
+            self.advance()
+            initializer = self.expression()
+        else:
+            initializer = None
+
+        return VariableDeclaration(name, initializer)
 
     def statement(self):
         """\
@@ -230,6 +237,9 @@ class Parser():
                 self.advance()
             else:
                 self.trap("missing right parenthesis for grouped expression")
+        elif self.curr_type() == TokenType.IDENTIFIER:
+            expr = Variable(self.curr_token())
+            self.advance()
         elif self.curr_type() == TokenType.EOF:
             #this situation occurs when the user has a grammar error at the
             #end of file such as "3-". In this situation, the parser has been
