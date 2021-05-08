@@ -27,3 +27,13 @@ class Environment():
         """
         return self.map[key]
         #todo: search parent environment
+
+    def modify(self, key, val):
+        """\
+        modify a k-v pair in the environment only if it exists. modifications
+        are not allowed to trigger insertions.
+        """
+        if key in self.map:
+            self.map[key] = val
+        else:
+            raise KeyError

@@ -55,7 +55,7 @@ class Variable(expr):
             return env.search(key)
         except KeyError:
             line = self.name.line
-            msg = "undefined variable {}".format(key)
+            msg = "attempted to access undefined variable '{}'".format(key)
             err.push(line, msg)
             raise RuntimeError
 
@@ -141,6 +141,27 @@ class Grouping(expr):
     def interpret(self, err, env):
         return self.val.interpret(err, env)
 
+class Assignment(expr):
+    def __init__(self, lval, rval):
+        #l values are tokens, r values are tree nodes
+        self.lval = lval
+        self.rval = rval
+
+    def __repr__(self):
+        return "= {} {}".format(self.lval.name, self.rval)
+
+    def interpret(self, err, env):
+        key = self.lval.lexeme
+        val = self.rval.interpret(err, env)
+
+        try:
+            env.modify(key, val)
+        except KeyError:
+            line = self.lval.line
+            msg = "variable '{}' not declared prior to assignment".format(key)
+            err.push(line, msg)
+            raise RuntimeError
+
 ################################################################################
 # statement-type nodes
 # these nodes are essentially identical to expression-type nodes but the
@@ -195,7 +216,7 @@ class VariableDeclaration(stmt):
         self.initializer = initializer
 
     def __repr__(self):
-        return "(= {} {})".format(self.name.lexeme, self.initializer)
+        return "(:= {} {})".format(self.name.lexeme, self.initializer)
 
     def interpret(self, err, env):
         """\
