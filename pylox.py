@@ -37,12 +37,14 @@ def exec_file(fname: str) -> None:
 def preprocess(p_src: str) -> str:
     global tok_debug
     global parse_debug
+    global env_debug
 
     pps = Preprocessor()
     src, flags = pps.scan(p_src)
 
     tok_debug = flags["tok_debug"]
     parse_debug = flags["parse_debug"]
+    env_debug = flags["env_debug"]
 
     return src
 
@@ -78,12 +80,12 @@ def run(src: str) -> None:
             print(tree)
 
     #interpretation
-    #for the REPL, a global environment is maintained.
-    #this is actually done because it allowed me to export the environment to
-    #disk and play around with some other experiments.
     itr = Interpreter(env)
     exit_status, err, env = itr.interpret(program)
     display_errors(err, "LOX: RUNTIME ERROR")
+
+    if env_debug:
+        print(env)
 
 #error trap
 def display_errors(err, header) -> bool:
@@ -101,6 +103,14 @@ def display_errors(err, header) -> bool:
 if __name__ == "__main__":
     tok_debug = False
     parse_debug = False
+    env_debug = False
+
+    #global environment for REPL
+    #not strictly a great idea for a real interpreter. however, I was playing
+    #around with experiments involving writing an evironment to disk and setting
+    #up shared memory maps over the environment while the repl is executing.
+    #I left it in as a note to revisit these ideas, and it also allows for the
+    #preprocessor to easily set up a pragma flag for environment debugging.
     env = None
 
     argc: int = len(argv)

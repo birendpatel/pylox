@@ -8,7 +8,11 @@ class Preprocessor():
         """\
         @flags: all pragma switches (defaulted to off mode)
         """
-        self.flags = {"tok_debug": False, "parse_debug": False}
+        self.flags = {
+            "tok_debug": False,
+            "parse_debug": False,
+            "env_debug": False
+        }
 
     def scan(self, p_src):
         """\
@@ -33,5 +37,13 @@ class Preprocessor():
         if p_src.find("pragma parse_debug off") >= 0:
             self.flags["parse_debug"] = False
             p_src = p_src.replace("#pragma parse_debug off", " ")
+
+        if p_src.find("pragma env_debug on") >= 0:
+            self.flags["env_debug"] = True
+            p_src = p_src.replace("#pragma env_debug on", " ")
+
+        if p_src.find("pragma env_debug off") >= 0:
+            self.flags["env_debug"] = False
+            p_src = p_src.replace("#pragma env_debug off", " ")
 
         return (p_src, self.flags)
