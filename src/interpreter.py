@@ -10,7 +10,7 @@ from src.node import Generic, Printer
 class Interpreter():
     def __init__(self):
         self.err = ErrorHandler(1)
-        self.env = Environment()
+        self.env = Environment(None)
 
     def interpret(self, program):
         """\

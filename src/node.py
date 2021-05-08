@@ -198,4 +198,10 @@ class VariableDeclaration(stmt):
         return "(= {} {})".format(self.name, self.initializer)
 
     def interpret(self, err, env):
-        pass
+        """\
+        insert k-v pair into environment. if the initializer is None, lox will
+        interpret this as nil.
+        """
+        key = self.name.lexeme
+        value = self.initializer
+        env.insert(key, value)

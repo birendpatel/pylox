@@ -98,13 +98,18 @@ class Parser():
         """\
         <var_declaration> := "var" IDENTIFIER ("=" <expression>)? ";"
         """
-        name = self.primary()
+        name = None
+        initializer = None
 
-        if self.curr_type() == TokenType.EQUAL:
+        if self.curr_type() == TokenType.IDENTIFIER:
+            name = self.curr_token()
             self.advance()
-            initializer = self.expression()
+
+            if self.curr_type() == TokenType.EQUAL:
+                self.advance()
+                initializer = self.expression()
         else:
-            initializer = None
+            self.trap("missing variable identifier")
 
         return VariableDeclaration(name, initializer)
 
