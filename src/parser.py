@@ -5,7 +5,7 @@
 from src.error import ErrorHandler, ParseError
 from src.tokenizer import Token, TokenType
 from src.node import Binary, Unary, Variable, Literal, Grouping, Assignment
-from src.node import Generic, Printer, VariableDeclaration
+from src.node import Generic, Printer, VariableDeclaration, Block
 
 class Parser():
     def __init__(self):
@@ -118,11 +118,16 @@ class Parser():
 
     def statement(self):
         """\
-        <statement> := <expression statement> | <print statement> ";"
+        <statement> := <expression statement> | <print statement> |
+                       <block statement> ";"
         """
         if self.curr_type() == TokenType.PRINT:
             self.advance()
             expr = self.print_stmt()
+        elif self.curr_type() == TokenType.LEFT_BRACE:
+            self.advance()
+            stmt_list = self.block_stmt()
+            expr = Block(stmt_list)
         else:
             expr = self.generic_stmt()
 
@@ -133,6 +138,28 @@ class Parser():
         <print statement> := "print" <expression> ";"
         """
         return Printer(self.expression())
+
+    def block_stmt(self):
+        """\
+        <block statement> := "{" <declaration>* "}"
+        this method returns a list of statements rather than a block node, b/c
+        it is used for both generic block statements and function blocks. The
+        caller must wrap the list into the appropriate node class.
+        """
+        stmt_list = []
+
+        while self.curr_type() != TokenType.RIGHT_BRACE:
+            stmt_list.append(self.declaration())
+
+        if self.curr_type() == TokenType.EOF:
+            self.trap("expected '}' at end of file")
+        elif self.curr_type() != tokenType.RIGHT_BRACE:
+            tok = self.curr_token()
+            self.trap("expected '}' at {}".format(tok.lexeme))
+        else:
+            self.advance()
+
+        return stmt_list
 
     def generic_stmt(self):
         """\

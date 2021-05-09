@@ -24,6 +24,8 @@ class Interpreter():
             try:
                 tree.interpret(self.err, self.env)
             except RuntimeError:
+                assert(self.env.parent is None)
                 return (1, self.err, self.env)
 
+        assert(self.env.parent is None)
         return (0, self.err, self.env)
