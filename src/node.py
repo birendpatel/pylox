@@ -228,3 +228,24 @@ class VariableDeclaration(stmt):
         key = self.name.lexeme
         value = self.initializer.interpret(err, env)
         env.insert(key, value)
+
+class Block(stmt):
+    def __init__(self, statements):
+        self.statements = statements
+
+    def __repr__(self):
+        header = ""
+
+        for i in self.statements:
+            header += "\n\t{}".format(i)
+
+        return header[1:]
+
+    def interpret(self, err, parent_env):
+        # let python GC synthentically push the child environment off the cactus
+        # stack. Any parent node of this block node will contain the unmodified
+        # reference to the parent environment.
+        child_env = Environment(parent_env)
+
+        for tree in self.statements:
+            tree.interpret(err, child_env)
