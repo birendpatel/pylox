@@ -4,7 +4,7 @@
 
 from src.error import ErrorHandler, ParseError
 from src.tokenizer import Token, TokenType
-from src.node import Binary, Unary, Variable, Literal, Grouping
+from src.node import Binary, Unary, Variable, Literal, Grouping, Assignment
 from src.node import Generic, Printer, VariableDeclaration
 
 class Parser():
@@ -143,9 +143,33 @@ class Parser():
     def expression(self):
         """\
         dummy method used to encode the lox grammar explicity in the source.
-        <expression> := <equality>
+        <expression> := <assignment>
         """
-        return self.equality()
+        return self.assignment()
+
+    def assignment(self):
+        """\
+        assign rvalue to lvalue
+        <assignment> := (IDENTIFIER "=" <assignment>) | <equality>
+        """
+        lval = self.equality()
+
+        if self.curr_type() == TokenType.EQUAL:
+            self.advance()
+            rval = self.assignment()
+
+            if isinstance(lval, Variable):
+                #extract token from variable node as a valid lvalue
+                return Assignment(lval.name, rval)
+
+            self.trap("assignment target is not an l-value")
+
+        #if trap was initiated, this return node is just a dummy.
+        #trap synchronized to the next statement anyways so its no risk.
+        #on the other hand, if the branch was skipped entirely, then lval
+        #is just some expression.
+        return lval
+
 
     def equality(self):
         """\
