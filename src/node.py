@@ -193,7 +193,7 @@ class Generic(stmt):
         self.expr = expr
 
     def __repr__(self):
-        return "(statement {})".format(self.expr)
+        return "(generic {})".format(self.expr)
 
     def interpret(self, err, env):
         self.expr.interpret(err, env)
@@ -218,7 +218,7 @@ class VariableDeclaration(stmt):
         self.initializer = initializer
 
     def __repr__(self):
-        return "(:= {} {})".format(self.name.lexeme, self.initializer)
+        return "(declare {} {})".format(self.name.lexeme, self.initializer)
 
     def interpret(self, err, env):
         """\
