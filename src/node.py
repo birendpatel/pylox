@@ -7,6 +7,12 @@ from src.error import ErrorHandler, RuntimeError
 from src.environment import Environment
 from src.tokenizer import Token, TokenType
 
+def truthfulness(val):
+    if val == None or val == False:
+        return True
+
+    return False
+
 ################################################################################
 # expression-type nodes
 
@@ -80,10 +86,7 @@ class Unary(expr):
             raise RuntimeError
 
         elif self.operator.type == TokenType.BANG:
-            if val == None or val == False:
-                return True
-
-            return False
+            return truthfulness(val)
 
 class Binary(expr):
     def __init__(self, left, operator, right):
@@ -116,6 +119,7 @@ class Binary(expr):
         raise RuntimeError
 
     dispatch_any = {
+        #python equality is the same as lox equality
         TokenType.EQUAL_EQUAL:      lambda x, y: x == y,
         TokenType.BANG_EQUAL:       lambda x, y: x != y
     }
