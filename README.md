@@ -6,13 +6,16 @@ language. For instance, a lightweight preprocessor is included. The original
 JLox implementation by Nystrom is located at https://github.com/munificent
 
 ```
-#pragma tok_debug on
-#pragma parse_debug on
 #pragma env_debug on
 
-var x = 2;
-var y = 3;
-var z = 5;
+print "this is the lox language!"
 
-print (x + y) * z;
+var x = 10;
+var y = 15;
+
+if (x == y) {
+        print "pass";
+} else {
+        print "fail";
+}
 ```

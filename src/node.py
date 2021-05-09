@@ -9,9 +9,9 @@ from src.tokenizer import Token, TokenType
 
 def truthfulness(val):
     if val == None or val == False:
-        return True
+        return False
 
-    return False
+    return True
 
 ################################################################################
 # expression-type nodes
@@ -86,7 +86,7 @@ class Unary(expr):
             raise RuntimeError
 
         elif self.operator.type == TokenType.BANG:
-            return truthfulness(val)
+            return not truthfulness(val)
 
 class Binary(expr):
     def __init__(self, left, operator, right):
@@ -253,3 +253,21 @@ class Block(stmt):
 
         for tree in self.statements:
             tree.interpret(err, child_env)
+
+class Branch(stmt):
+    def __init__(self, condition, then_branch, else_branch):
+        self.condition = condition
+        self.then_branch = then_branch
+        self.else_branch = else_branch
+
+    def __repr__(self):
+        msg = "(if {} {} {} )"
+        return msg.format(self.condition, self.then_branch, self.else_branch)
+
+    def interpret(self, err, env):
+        #may not evaluate at all if there is no else branch and the condition
+        #fails.
+        if truthfulness(self.condition.interpret(err, env)):
+            self.then_branch.interpret(err, env)
+        elif self.else_branch is not None:
+            self.else_branch.interpret(err, env)

@@ -5,7 +5,7 @@
 from src.error import ErrorHandler, ParseError
 from src.tokenizer import Token, TokenType
 from src.node import Binary, Unary, Variable, Literal, Grouping, Assignment
-from src.node import Generic, Printer, VariableDeclaration, Block
+from src.node import Generic, Printer, VariableDeclaration, Block, Branch
 
 class Parser():
     def __init__(self):
@@ -122,7 +122,7 @@ class Parser():
     def statement(self):
         """\
         <statement> := <expression statement> | <print statement> |
-                       <block statement>
+                       <block statement> | <if statement>
         """
         if self.curr_type() == TokenType.PRINT:
             self.advance()
@@ -131,6 +131,9 @@ class Parser():
             self.advance()
             stmt_list = self.block_stmt()
             expr = Block(stmt_list)
+        elif self.curr_type() == TokenType.IF:
+            self.advance()
+            expr = self.branch_stmt()
         else:
             expr = self.generic_stmt()
 
@@ -166,6 +169,33 @@ class Parser():
             self.advance()
 
         return stmt_list
+
+    def branch_stmt(self):
+        """\
+        <branch> := "if" "(" <expr> ")" <stmt> ("else" <stmt>)?
+        """
+        if self.curr_type() != TokenType.LEFT_PAREN:
+            self.trap("expected open parenthesis after 'if'")
+            return Branch(None, None, None)
+
+        self.advance()
+
+        condition = self.expression()
+
+        if self.curr_type() != TokenType.RIGHT_PAREN:
+            self.trap("expected close parenthesis after condition")
+            return Branch(None, None, None)
+
+        self.advance()
+
+        then_branch = self.statement()
+        else_branch = None
+
+        if self.curr_type() == TokenType.ELSE:
+            self.advance()
+            else_branch = self.statement()
+
+        return Branch(condition, then_branch, else_branch)
 
     def generic_stmt(self):
         """\
