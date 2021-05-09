@@ -234,13 +234,12 @@ class Block(stmt):
         self.statements = statements
 
     def __repr__(self):
-        header = "(block"
-        tail = "\n)"
+        header = ""
 
         for i in self.statements:
-            header += "\t{}".format(i)
+            header += "\n\t{}".format(i)
 
-        return header + tail
+        return header[1:]
 
     def interpret(self, err, parent_env):
         # let python GC synthentically push the child environment off the cactus
@@ -248,5 +247,5 @@ class Block(stmt):
         # reference to the parent environment.
         child_env = Environment(parent_env)
 
-        for tree in statements:
+        for tree in self.statements:
             tree.interpret(err, child_env)
