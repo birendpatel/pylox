@@ -303,6 +303,7 @@ class Loop(stmt):
 
     def __repr__(self):
         msg = "(while {} {})".format(self.condition, self.body)
+        return msg
 
     def interpret(self, err, env):
         while truthfulness(self.condition.interpret(err, env)):

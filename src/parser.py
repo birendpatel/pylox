@@ -70,12 +70,15 @@ class Parser():
     def check_semicolon(self):
         if self.curr_type() == TokenType.SEMICOLON:
             self.advance()
+            return True
         else:
             tok = self.curr_token()
             if tok.type == TokenType.EOF:
                 self.trap("expected ';' at end of file")
             else:
                 self.trap("expected ';' before {}".format(tok.lexeme))
+
+            return False
 
     def program(self):
         """\
@@ -148,7 +151,7 @@ class Parser():
             stmt = self.while_stmt()
         elif self.curr_type() == TokenType.FOR:
             self.advance()
-            stmt = self.for_stmt
+            stmt = self.for_stmt()
         else:
             stmt = self.generic_stmt()
 
@@ -237,7 +240,7 @@ class Parser():
     def for_stmt(self):
         """\
         <for statement> := "for" "(" (<var decl> | <expr stmt> | ";")
-                           (<expr stmt> | ";") <expression>? ")" <statement>
+                            <expression>? ";" <expression>? ")" <statement>
 
         for statements are desugared into an equivalent while statement.
         """
@@ -262,14 +265,16 @@ class Parser():
         if self.curr_type() == TokenType.SEMICOLON:
             self.advance()
         else:
-            condition = self.generic_stmt()
+            condition = self.expression()
+            if not self.check_semicolon():
+                return Loop(None, None)
 
         increment = None
 
         if self.curr_type() != TokenType.RIGHT_PAREN:
             increment = self.expression()
 
-        if self.curr_type == TokenType.RIGHT_PAREN:
+        if self.curr_type() == TokenType.RIGHT_PAREN:
             self.advance()
         else:
             self.trap("expected ')' after a for loop clause")
