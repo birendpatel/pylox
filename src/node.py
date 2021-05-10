@@ -295,3 +295,15 @@ class Branch(stmt):
             self.then_branch.interpret(err, env)
         elif self.else_branch is not None:
             self.else_branch.interpret(err, env)
+
+class Loop(stmt):
+    def __init__(self, condition, body):
+        self.condition = condition
+        self.body = body
+
+    def __repr__(self):
+        msg = "(while {} {})".format(self.condition, self.body)
+
+    def interpret(self, err, env):
+        while truthfulness(self.condition.interpret(err, env)):
+            self.body.interpret(err, env)

@@ -4,9 +4,12 @@
 
 from src.error import ErrorHandler, ParseError
 from src.tokenizer import Token, TokenType
+
 from src.node import Binary, Unary, Variable, Literal, Grouping, Assignment
 from src.node import Logical
+
 from src.node import Generic, Printer, VariableDeclaration, Block, Branch
+from src.node import Loop
 
 class Parser():
     def __init__(self):
@@ -123,22 +126,29 @@ class Parser():
     def statement(self):
         """\
         <statement> := <expression statement> | <print statement> |
-                       <block statement> | <if statement>
+                       <block statement> | <if statement> | <while statement>
         """
+        # this isn't the world's fastest code, a jump table or dictionary-based
+        # switch would be better, but hey we're writing an interpreter in
+        # python! This is hardly the bottleneck!
+
         if self.curr_type() == TokenType.PRINT:
             self.advance()
-            expr = self.print_stmt()
+            stmt = self.print_stmt()
         elif self.curr_type() == TokenType.LEFT_BRACE:
             self.advance()
             stmt_list = self.block_stmt()
-            expr = Block(stmt_list)
+            stmt = Block(stmt_list)
         elif self.curr_type() == TokenType.IF:
             self.advance()
-            expr = self.branch_stmt()
+            stmt = self.branch_stmt()
+        elif self.curr_type() == TokenType.WHILE:
+            self.advance()
+            stmt = self.while_stmt()
         else:
-            expr = self.generic_stmt()
+            stmt = self.generic_stmt()
 
-        return expr
+        return stmt
 
     def print_stmt(self):
         """\
@@ -197,6 +207,28 @@ class Parser():
             else_branch = self.statement()
 
         return Branch(condition, then_branch, else_branch)
+
+    def while_stmt(self):
+        """
+        <while> := "while" "(" <expression> ")" <statement>
+        """
+        if self.curr_type() != TokenType.LEFT_PAREN:
+            self.trap("expected open parenthesis after 'if'")
+            return Loop(None, None)
+
+        self.advance()
+
+        condition = self.expression()
+
+        if self.curr_type() != TokenType.RIGHT_PAREN:
+            self.trap("expected close parenthesis after condition")
+            return Loop(None, None)
+
+        self.advance()
+
+        body = self.statement()
+
+        return Loop(condition, body)
 
     def generic_stmt(self):
         """\
