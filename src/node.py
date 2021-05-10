@@ -168,6 +168,30 @@ class Assignment(expr):
 
         return val
 
+class Logical(expr):
+    def __init__(self, left, operator, right):
+        self.left = left
+        self.operator = operator
+        self.right = right
+
+    def __repr__(self):
+        lexeme = self.operator.lexeme
+        return "({} {} {})".format(lexeme, self.left, self.right)
+
+    def interpret(self, err, env):
+        #return val as the expression value
+        #it provides an extra level of information over a simple true/false
+        val = self.left.interpret(err, env)
+
+        if self.operator.type == TokenType.OR:
+            if truthfulness(val):
+                return val
+        if self.operator.type == TokenType.AND:
+            if not truthfulness(val):
+                return val
+
+        return self.right.interpret(err, env)
+
 ################################################################################
 # statement-type nodes
 # these nodes are essentially identical to expression-type nodes but the

@@ -215,9 +215,9 @@ class Parser():
     def assignment(self):
         """\
         assign rvalue to lvalue
-        <assignment> := (IDENTIFIER "=" <assignment>) | <equality>
+        <assignment> := (IDENTIFIER "=" <assignment>) | <logical or>
         """
-        lval = self.equality()
+        lval = self.logical_or()
 
         if self.curr_type() == TokenType.EQUAL:
             self.advance()
@@ -235,6 +235,39 @@ class Parser():
         #is just some expression.
         return lval
 
+    def logical_or(self):
+        """\
+        <logical or> := <logical and> ("or" <logical and>)*
+        """
+        expr = self.logical_and()
+
+        if self.curr_type() == TokenType.OR:
+            self.advance()
+
+            left = expr
+            tok = self.prev_token()
+            right = self.logical_and()
+
+            return Logical(left, tok, right)
+
+        return expr
+
+    def logical_and(self):
+        """\
+        <logical and> := <equality> ("and" <equality>)*
+        """
+        expr = self.equality()
+
+        if self.curr_type() == TokenType.AND:
+            self.advance()
+
+            left = expr
+            tok = self.prev_token()
+            right = self.logical_and()
+
+            return Logical(left, tok, right)
+
+        return expr
 
     def equality(self):
         """\
