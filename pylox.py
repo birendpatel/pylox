@@ -56,12 +56,12 @@ def run(src: str) -> None:
     tkz = Tokenizer()
     tokens, err = tkz.tokenize(src)
 
-    if display_errors(err, "LOX: SYNTAX ERROR"):
-        return
-
     if tok_debug:
         for i in tokens:
             print(i)
+
+    if display_errors(err, "LOX: SYNTAX ERROR"):
+        return
 
     #don't send single EOF token to parser
     #this allows parser to make stricter assertions while generating the AST
@@ -72,12 +72,12 @@ def run(src: str) -> None:
     prs = Parser()
     program, err = prs.parse(tokens)
 
-    if display_errors(err, "LOX: GRAMMAR ERROR"):
-        return
-
     if parse_debug:
         for tree in program:
             print(tree)
+
+    if display_errors(err, "LOX: GRAMMAR ERROR"):
+        return
 
     #interpretation
     itr = Interpreter(env)
