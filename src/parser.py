@@ -126,7 +126,8 @@ class Parser():
     def statement(self):
         """\
         <statement> := <expression statement> | <print statement> |
-                       <block statement> | <if statement> | <while statement>
+                       <block statement> | <if statement> | <while statement> |
+                       <for statement>
         """
         # this isn't the world's fastest code, a jump table or dictionary-based
         # switch would be better, but hey we're writing an interpreter in
@@ -145,6 +146,9 @@ class Parser():
         elif self.curr_type() == TokenType.WHILE:
             self.advance()
             stmt = self.while_stmt()
+        elif self.curr_type() == TokenType.FOR:
+            self.advance()
+            stmt = self.for_stmt
         else:
             stmt = self.generic_stmt()
 
@@ -229,6 +233,67 @@ class Parser():
         body = self.statement()
 
         return Loop(condition, body)
+
+    def for_stmt(self):
+        """\
+        <for statement> := "for" "(" (<var decl> | <expr stmt> | ";")
+                           (<expr stmt> | ";") <expression>? ")" <statement>
+
+        for statements are desugared into an equivalent while statement.
+        """
+        if self.curr_type() != TokenType.LEFT_PAREN:
+            self.trap("expected '(' after 'for'")
+            return Loop(None, None)
+
+        self.advance()
+
+        initializer = None
+
+        if self.curr_type() == TokenType.SEMICOLON:
+            self.advance()
+        elif self.curr_type() == TokenType.VAR:
+            self.advance()
+            initializer = self.var_declaration()
+        else:
+            initializer = self.generic_stmt()
+
+        condition = None
+
+        if self.curr_type() == TokenType.SEMICOLON:
+            self.advance()
+        else:
+            condition = self.generic_stmt()
+
+        increment = None
+
+        if self.curr_type() != TokenType.RIGHT_PAREN:
+            increment = self.expression()
+
+        if self.curr_type == TokenType.RIGHT_PAREN:
+            self.advance()
+        else:
+            self.trap("expected ')' after a for loop clause")
+            return Loop(None, None)
+
+        body = self.statement()
+
+        #desugar the for loop by nesting the disjoint nodes into blocks
+        if increment is not None:
+            body = Block([body, increment])
+
+        if condition is not None:
+            body = Loop(condition, body)
+        else:
+            #a little different from standard lox
+            #if you want an infinite loop, make it clear with a while(true)
+            #so in reality, this isn't a by-the-book lox implementation
+            self.trap("infinite loop detected, use while(true) instead")
+            return Loop(None, None)
+
+        if initializer is not None:
+            body = Block([initializer, body])
+
+        return body
 
     def generic_stmt(self):
         """\
