@@ -5,6 +5,7 @@
 from src.error import ErrorHandler, ParseError
 from src.tokenizer import Token, TokenType
 from src.node import Binary, Unary, Variable, Literal, Grouping, Assignment
+from src.node import Logical
 from src.node import Generic, Printer, VariableDeclaration, Block, Branch
 
 class Parser():
